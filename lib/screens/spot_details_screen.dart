@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class SpotDetailsScreen extends StatelessWidget {
   final Map<String, String> spot;
 
-  SpotDetailsScreen({required this.spot});
+  const SpotDetailsScreen({super.key, required this.spot});
 
   @override
   Widget build(BuildContext context) {

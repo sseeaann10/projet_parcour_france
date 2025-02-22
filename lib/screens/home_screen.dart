@@ -4,6 +4,8 @@ import 'profile_screen.dart';
 import '../widgets/spot_card.dart';
 
 class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
@@ -62,6 +64,8 @@ class HomeContentScreen extends StatelessWidget {
           'https://picardie.media.tourinsoft.eu/upload/parcsaintpierre8-amiens-somme-picardie.JPG',
     },
   ];
+
+  HomeContentScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

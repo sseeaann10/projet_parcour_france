@@ -6,6 +6,7 @@ class SpotCard extends StatelessWidget {
   final String imageUrl;
 
   const SpotCard({
+    super.key,
     required this.title,
     required this.description,
     required this.imageUrl,
