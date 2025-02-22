@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../models/spot.dart';
+import '../models/spot_model.dart';
+import 'spot_details_screen.dart';
 
 class FavoritesScreen extends StatefulWidget {
   @override
@@ -11,7 +12,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     Spot(
       id: 1,
       title: 'Spot 1',
-      description: 'Description du spot 1',
+      description: 'Description du spot mon gars',
       image:
           'https://www.salzburg.info/deskline/infrastruktur/objekte/zoo-salzburg-hellbrunn_4106/image-thumb__909277__slider-main/Familie%20Wei%C3%9Fhandgibbon_29519656.jpg',
       distance: 10.0,
@@ -62,6 +63,23 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                       icon: Icon(Icons.favorite, color: Colors.red),
                       onPressed: () => _removeFavorite(index),
                     ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => SpotDetailsScreen(
+                            spot: favorites[index],
+                            onAddToFavorites: (spot) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                    content: Text(
+                                        'Ce spot est déjà dans vos favoris')),
+                              );
+                            },
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 );
               },

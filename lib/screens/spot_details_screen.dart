@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
+import '../models/spot_model.dart';
 
 class SpotDetailsScreen extends StatelessWidget {
-  final Map<String, String> spot;
-  final Function(Map<String, String>) onAddToFavorites;
+  final Spot spot;
+  final Function(Spot) onAddToFavorites;
 
-  const SpotDetailsScreen({
-    Key? key,
+  SpotDetailsScreen({
     required this.spot,
     required this.onAddToFavorites,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(spot['title']!),
+        title: Text(spot.title),
         actions: [
           IconButton(
             icon: Icon(Icons.favorite_border),
@@ -24,10 +24,18 @@ class SpotDetailsScreen extends StatelessWidget {
       ),
       body: Column(
         children: [
-          Image.network(spot['image']!),
+          Image.network(spot.image),
           Padding(
             padding: EdgeInsets.all(16.0),
-            child: Text(spot['description']!),
+            child: Text(spot.description),
+          ),
+          Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Text('Catégorie : ${spot.category}'),
+          ),
+          Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Text('Distance : ${spot.distance} km'),
           ),
         ],
       ),

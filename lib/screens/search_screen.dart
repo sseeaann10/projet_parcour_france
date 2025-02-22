@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/spot.dart';
+import '../models/spot_model.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -79,6 +79,9 @@ class _SearchScreenState extends State<SearchScreen> {
 
   final List<String> _categories = ['Toutes', 'Nature', 'Sport', 'Histoire'];
 
+  String _tempCategory = 'Toutes';
+  double _tempDistance = 20.0;
+
   // Fonction pour filtrer les spots
   void _filterSpots(String query) {
     setState(() {
@@ -105,6 +108,14 @@ class _SearchScreenState extends State<SearchScreen> {
       print('Catégorie : $_selectedCategory');
       print('Distance : $_selectedDistance');
       print('Résultats : ${filteredSpots.length} spots trouvés');
+    });
+  }
+
+  void _applyFilters() {
+    setState(() {
+      _selectedCategory = _tempCategory;
+      _selectedDistance = _tempDistance;
+      _filterSpots(_searchController.text);
     });
   }
 
@@ -145,8 +156,9 @@ class _SearchScreenState extends State<SearchScreen> {
                   value: _selectedCategory,
                   onChanged: (String? newValue) {
                     setState(() {
-                      _selectedCategory = newValue!;
-                      _filterSpots(_searchController.text);
+                      /*_selectedCategory = newValue!;
+                      _filterSpots(_searchController.text);*/
+                      _tempCategory = newValue!;
                     });
                   },
                   items:
@@ -190,17 +202,23 @@ class _SearchScreenState extends State<SearchScreen> {
                 Text(
                     'Distance maximale : ${_selectedDistance.toStringAsFixed(1)} km'),
                 Slider(
-                  value: _selectedDistance,
+                  //value: _selectedDistance,
+                  value: _tempDistance,
                   min: 0.0,
                   max: 20.0,
                   divisions: 20,
                   label: _selectedDistance.toStringAsFixed(1),
                   onChanged: (double value) {
-                    setState(() {
+                    /*setState(() {
                       _selectedDistance = value;
                       _filterSpots(_searchController.text);
-                    });
+                    });*/
+                    _tempDistance = value;
                   },
+                ),
+                ElevatedButton(
+                  onPressed: _applyFilters,
+                  child: Text('Appliquer les filtres'),
                 ),
               ],
             ),

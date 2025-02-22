@@ -4,6 +4,7 @@ import 'profile_screen.dart';
 import '../widgets/spot_card.dart';
 import 'favorites_screen.dart';
 import 'spot_details_screen.dart';
+import '../models/spot_model.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -79,7 +80,7 @@ class _HomeContentScreenState extends State<HomeContentScreen> {
     },
   ];
 
-  final List<Map<String, String>> favorites = [];
+  final List<Spot> favorites = [];
 
   @override
   Widget build(BuildContext context) {
@@ -98,7 +99,14 @@ class _HomeContentScreenState extends State<HomeContentScreen> {
               Navigator.of(context).push<void>(
                 MaterialPageRoute<void>(
                   builder: (context) => SpotDetailsScreen(
-                    spot: spots[index],
+                    spot: Spot(
+                      id: 0,
+                      title: spots[index]['title']!,
+                      description: spots[index]['description']!,
+                      image: spots[index]['image']!,
+                      distance: 0.0,
+                      category: 'Non catégorisé',
+                    ),
                     onAddToFavorites: (spot) {
                       setState(() {
                         favorites.add(spot);
