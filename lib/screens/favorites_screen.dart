@@ -14,6 +14,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       description: 'Description du spot 1',
       image:
           'https://www.salzburg.info/deskline/infrastruktur/objekte/zoo-salzburg-hellbrunn_4106/image-thumb__909277__slider-main/Familie%20Wei%C3%9Fhandgibbon_29519656.jpg',
+      distance: 10.0,
+      category: 'Nature',
     ),
     Spot(
       id: 2,
@@ -21,6 +23,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       description: 'Description du spot 2',
       image:
           'https://www.salzburg.info/deskline/infrastruktur/objekte/zoo-salzburg-hellbrunn_4106/image-thumb__909277__slider-main/Familie%20Wei%C3%9Fhandgibbon_29519656.jpg',
+      distance: 15.0,
+      category: 'Sport',
     ),
   ];
 
