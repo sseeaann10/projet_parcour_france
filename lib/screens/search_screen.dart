@@ -1,40 +1,10 @@
 import 'package:flutter/material.dart';
-import '../models/spot_model.dart';
+import '../models/spot_model.dart'; // Importe le modèle Spot
 
 class SearchScreen extends StatefulWidget {
-  const SearchScreen({super.key});
-
   @override
   _SearchScreenState createState() => _SearchScreenState();
 }
-
-/*class _SearchScreenState extends State<SearchScreen> {
-  String _searchQuery = '';
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: TextField(
-          decoration: InputDecoration(
-            hintText: 'Rechercher un spot ou un événement',
-            border: InputBorder.none,
-          ),
-          onChanged: (value) {
-            setState(() {
-              _searchQuery = value;
-            });
-          },
-        ),
-      ),
-      body: Center(
-        child: _searchQuery.isEmpty
-            ? Text('Entrez une recherche')
-            : Text('Résultats pour "$_searchQuery"'),
-      ),
-    );
-  }
-}*/
 
 class _SearchScreenState extends State<SearchScreen> {
   // Liste complète des spots (simulée pour l'exemple)
@@ -43,26 +13,23 @@ class _SearchScreenState extends State<SearchScreen> {
       id: 1,
       title: 'Spot 1',
       description: 'Un endroit magnifique pour se détendre.',
-      image:
-          'https://www.salzburg.info/deskline/infrastruktur/objekte/zoo-salzburg-hellbrunn_4106/image-thumb__909277__slider-main/Familie%20Wei%C3%9Fhandgibbon_29519656.jpg',
+      image: 'https://via.placeholder.com/150',
       category: 'Nature',
-      distance: 10.0,
+      distance: 5.0,
     ),
     Spot(
       id: 2,
       title: 'Spot 2',
       description: 'Parfait pour les amateurs de nature.',
-      image:
-          'https://www.salzburg.info/deskline/infrastruktur/objekte/zoo-salzburg-hellbrunn_4106/image-thumb__909277__slider-main/Familie%20Wei%C3%9Fhandgibbon_29519656.jpg',
-      category: 'Sport',
-      distance: 17.0,
+      image: 'https://via.placeholder.com/150',
+      category: 'Nature',
+      distance: 10.0,
     ),
     Spot(
       id: 3,
       title: 'Spot 3',
       description: 'Un lieu historique à ne pas manquer.',
-      image:
-          'https://www.salzburg.info/deskline/infrastruktur/objekte/zoo-salzburg-hellbrunn_4106/image-thumb__909277__slider-main/Familie%20Wei%C3%9Fhandgibbon_29519656.jpg',
+      image: 'https://via.placeholder.com/150',
       category: 'Histoire',
       distance: 15.0,
     ),
@@ -74,29 +41,41 @@ class _SearchScreenState extends State<SearchScreen> {
   // Contrôleur pour le champ de recherche
   final TextEditingController _searchController = TextEditingController();
 
-  String _selectedCategory = 'Toutes';
-  double _selectedDistance = 20.0;
-
-  final List<String> _categories = ['Toutes', 'Nature', 'Sport', 'Histoire'];
-
+  // Filtres temporaires (visuels)
   String _tempCategory = 'Toutes';
   double _tempDistance = 20.0;
 
-  // Fonction pour filtrer les spots
-  void _filterSpots(String query) {
+  // Filtres appliqués (utilisés pour filtrer la liste)
+  String _appliedCategory = 'Toutes';
+  double _appliedDistance = 20.0;
+
+  // Catégories disponibles
+  final List<String> categories = ['Toutes', 'Nature', 'Histoire', 'Culture'];
+
+  // Fonction pour appliquer les filtres
+  void _applyFilters() {
     setState(() {
+      // Applique les filtres temporaires
+      _appliedCategory = _tempCategory;
+      _appliedDistance = _tempDistance;
+
+      // Filtre les spots
       filteredSpots = allSpots.where((spot) {
         // Filtre par mot-clé
-        bool matchesQuery = query.isEmpty ||
-            spot.title.toLowerCase().contains(query.toLowerCase()) ||
-            spot.description.toLowerCase().contains(query.toLowerCase());
+        bool matchesQuery = _searchController.text.isEmpty ||
+            spot.title
+                .toLowerCase()
+                .contains(_searchController.text.toLowerCase()) ||
+            spot.description
+                .toLowerCase()
+                .contains(_searchController.text.toLowerCase());
 
         // Filtre par catégorie
         bool matchesCategory =
-            _selectedCategory == 'Toutes' || spot.category == _selectedCategory;
+            _appliedCategory == 'Toutes' || spot.category == _appliedCategory;
 
         // Filtre par distance
-        bool matchesDistance = spot.distance <= _selectedDistance;
+        bool matchesDistance = spot.distance <= _appliedDistance;
 
         // Applique tous les filtres
         return matchesQuery && matchesCategory && matchesDistance;
@@ -104,18 +83,10 @@ class _SearchScreenState extends State<SearchScreen> {
 
       // Debug : Affiche les résultats du filtrage
       print('Filtres appliqués :');
-      print('Mot-clé : $query');
-      print('Catégorie : $_selectedCategory');
-      print('Distance : $_selectedDistance');
+      print('Mot-clé : ${_searchController.text}');
+      print('Catégorie : $_appliedCategory');
+      print('Distance : $_appliedDistance');
       print('Résultats : ${filteredSpots.length} spots trouvés');
-    });
-  }
-
-  void _applyFilters() {
-    setState(() {
-      _selectedCategory = _tempCategory;
-      _selectedDistance = _tempDistance;
-      _filterSpots(_searchController.text);
     });
   }
 
@@ -139,39 +110,34 @@ class _SearchScreenState extends State<SearchScreen> {
               icon: Icon(Icons.clear),
               onPressed: () {
                 _searchController.clear();
-                _filterSpots(''); // Réinitialise la recherche
+                _applyFilters(); // Réinitialise la recherche
               },
             ),
           ),
-          onChanged: _filterSpots, // Appelle _filterSpots à chaque saisie
         ),
       ),
       body: Column(
         children: [
+          // Filtre par catégorie
           Padding(
             padding: EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                DropdownButton<String>(
-                  value: _selectedCategory,
-                  onChanged: (String? newValue) {
-                    setState(() {
-                      /*_selectedCategory = newValue!;
-                      _filterSpots(_searchController.text);*/
-                      _tempCategory = newValue!;
-                    });
-                  },
-                  items:
-                      _categories.map<DropdownMenuItem<String>>((String value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(value),
-                    );
-                  }).toList(),
-                ),
-              ],
+            child: DropdownButton<String>(
+              value: _tempCategory,
+              onChanged: (String? newValue) {
+                setState(() {
+                  _tempCategory =
+                      newValue!; // Met à jour la catégorie temporaire
+                });
+              },
+              items: categories.map<DropdownMenuItem<String>>((String value) {
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(value),
+                );
+              }).toList(),
             ),
           ),
+          // Liste des résultats
           Expanded(
             child: filteredSpots.isEmpty
                 ? Center(
@@ -188,34 +154,34 @@ class _SearchScreenState extends State<SearchScreen> {
                         child: ListTile(
                           leading: Image.network(filteredSpots[index].image),
                           title: Text(filteredSpots[index].title),
-                          subtitle: Text(
-                              '${filteredSpots[index].description}\n${filteredSpots[index].distance} km'),
+                          subtitle: Text(filteredSpots[index].description),
+                          trailing: Text('${filteredSpots[index].distance} km'),
                         ),
                       );
                     },
                   ),
           ),
+          // Filtre par distance (en bas de l'écran)
           Padding(
             padding: EdgeInsets.all(16.0),
             child: Column(
               children: [
                 Text(
-                    'Distance maximale : ${_selectedDistance.toStringAsFixed(1)} km'),
+                    'Distance maximale : ${_tempDistance.toStringAsFixed(1)} km'),
                 Slider(
-                  //value: _selectedDistance,
                   value: _tempDistance,
                   min: 0.0,
                   max: 20.0,
                   divisions: 20,
-                  label: _selectedDistance.toStringAsFixed(1),
+                  label: _tempDistance.toStringAsFixed(1),
                   onChanged: (double value) {
-                    /*setState(() {
-                      _selectedDistance = value;
-                      _filterSpots(_searchController.text);
-                    });*/
-                    _tempDistance = value;
+                    setState(() {
+                      _tempDistance =
+                          value; // Met à jour la distance temporaire
+                    });
                   },
                 ),
+                // Bouton pour appliquer les filtres
                 ElevatedButton(
                   onPressed: _applyFilters,
                   child: Text('Appliquer les filtres'),
