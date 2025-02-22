@@ -52,12 +52,14 @@ class HomeContentScreen extends StatelessWidget {
     {
       'title': 'Spot 1',
       'description': 'Un endroit magnifique pour se détendre.',
-      'image': 'https://via.placeholder.com/150',
+      'image':
+          'https://www.salzburg.info/deskline/infrastruktur/objekte/zoo-salzburg-hellbrunn_4106/image-thumb__909277__slider-main/Familie%20Wei%C3%9Fhandgibbon_29519656.jpg',
     },
     {
       'title': 'Spot 2',
       'description': 'Parfait pour les amateurs de nature.',
-      'image': 'https://via.placeholder.com/150',
+      'image':
+          'https://picardie.media.tourinsoft.eu/upload/parcsaintpierre8-amiens-somme-picardie.JPG',
     },
   ];
 
