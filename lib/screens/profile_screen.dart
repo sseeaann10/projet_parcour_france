@@ -1,43 +1,23 @@
 import 'package:flutter/material.dart';
 
 class ProfileScreen extends StatelessWidget {
-  final Map<String, String> user = {
-    'name': 'John Doe',
-    'email': 'john.doe@example.com',
-    'image': 'https://via.placeholder.com/150',
-  };
-
-  final List<Map<String, String>> favorites = [
-    {
-      'title': 'Spot 1',
-      'description': 'Un endroit magnifique pour se détendre.',
-      'image':
-          'https://www.salzburg.info/deskline/infrastruktur/objekte/zoo-salzburg-hellbrunn_4106/image-thumb__909277__slider-main/Familie%20Wei%C3%9Fhandgibbon_29519656.jpg',
-    },
-    {
-      'title': 'Spot 2',
-      'description': 'Parfait pour les amateurs de nature.',
-      'image':
-          'https://www.salzburg.info/deskline/infrastruktur/objekte/zoo-salzburg-hellbrunn_4106/image-thumb__909277__slider-main/Familie%20Wei%C3%9Fhandgibbon_29519656.jpg',
-    },
-  ];
-
-  ProfileScreen({super.key});
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Profil'),
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: EdgeInsets.all(16.0),
-            child: Row(
+      body: Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Section informations utilisateur
+            Row(
               children: [
                 CircleAvatar(
-                  backgroundImage: NetworkImage(user['image']!),
+                  backgroundImage: NetworkImage(
+                      'https://sm.ign.com/ign_fr/cover/a/avatar-gen/avatar-generations_bssq.jpg'),
                   radius: 40,
                 ),
                 SizedBox(width: 16),
@@ -45,31 +25,27 @@ class ProfileScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      user['name']!,
+                      'Avatar Aang',
                       style: TextStyle(fontSize: 24),
                     ),
-                    Text(user['email']!),
+                    Text('aang@avatar.com'),
                   ],
                 ),
               ],
             ),
-          ),
-          Expanded(
-            child: ListView.builder(
-              itemCount: favorites.length,
-              itemBuilder: (context, index) {
-                return Card(
-                  margin: EdgeInsets.all(8.0),
-                  child: ListTile(
-                    leading: Image.network(favorites[index]['image']!),
-                    title: Text(favorites[index]['title']!),
-                    subtitle: Text(favorites[index]['description']!),
-                  ),
-                );
-              },
+            SizedBox(height: 20),
+            // Section autres informations (optionnelle)
+            Text(
+              'À propos',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-          ),
-        ],
+            SizedBox(height: 10),
+            Text(
+              'Passionné de voyages et de découvertes.',
+              style: TextStyle(fontSize: 16),
+            ),
+          ],
+        ),
       ),
     );
   }

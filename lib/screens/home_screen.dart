@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'search_screen.dart';
 import 'profile_screen.dart';
 import '../widgets/spot_card.dart';
+import 'favorites_screen.dart';
+import 'spot_details_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -16,6 +18,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<Widget> _screens = [
     HomeContentScreen(),
     SearchScreen(),
+    FavoritesScreen(),
     ProfileScreen(),
   ];
 
@@ -30,6 +33,8 @@ class _HomeScreenState extends State<HomeScreen> {
             _currentIndex = index;
           });
         },
+        selectedItemColor: Colors.blue, // Couleur de l'onglet sélectionné
+        unselectedItemColor: Colors.grey, // Couleur des autres onglets
         items: [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
@@ -38,6 +43,10 @@ class _HomeScreenState extends State<HomeScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.search),
             label: 'Recherche',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.favorite),
+            label: 'Favoris',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
@@ -49,7 +58,12 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-class HomeContentScreen extends StatelessWidget {
+class HomeContentScreen extends StatefulWidget {
+  @override
+  _HomeContentScreenState createState() => _HomeContentScreenState();
+}
+
+class _HomeContentScreenState extends State<HomeContentScreen> {
   final List<Map<String, String>> spots = [
     {
       'title': 'Spot 1',
@@ -65,7 +79,7 @@ class HomeContentScreen extends StatelessWidget {
     },
   ];
 
-  HomeContentScreen({super.key});
+  final List<Map<String, String>> favorites = [];
 
   @override
   Widget build(BuildContext context) {
@@ -80,6 +94,20 @@ class HomeContentScreen extends StatelessWidget {
             title: spots[index]['title']!,
             description: spots[index]['description']!,
             imageUrl: spots[index]['image']!,
+            onTap: () {
+              Navigator.of(context).push<void>(
+                MaterialPageRoute<void>(
+                  builder: (context) => SpotDetailsScreen(
+                    spot: spots[index],
+                    onAddToFavorites: (spot) {
+                      setState(() {
+                        favorites.add(spot);
+                      });
+                    },
+                  ),
+                ),
+              );
+            },
           );
         },
       ),
