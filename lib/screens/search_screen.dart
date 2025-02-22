@@ -82,19 +82,29 @@ class _SearchScreenState extends State<SearchScreen> {
   // Fonction pour filtrer les spots
   void _filterSpots(String query) {
     setState(() {
-      if (query.isEmpty &&
-          _selectedCategory == 'Toutes' &&
-          _selectedDistance == 20.0) {
-        // Si la recherche est vide, affiche tous les spots
-        filteredSpots = allSpots;
-      } else {
-        // Sinon, filtre les spots dont le titre ou la description contient le mot-clé
-        filteredSpots = allSpots
-            .where((spot) =>
-                spot.title.toLowerCase().contains(query.toLowerCase()) ||
-                spot.description.toLowerCase().contains(query.toLowerCase()))
-            .toList();
-      }
+      filteredSpots = allSpots.where((spot) {
+        // Filtre par mot-clé
+        bool matchesQuery = query.isEmpty ||
+            spot.title.toLowerCase().contains(query.toLowerCase()) ||
+            spot.description.toLowerCase().contains(query.toLowerCase());
+
+        // Filtre par catégorie
+        bool matchesCategory =
+            _selectedCategory == 'Toutes' || spot.category == _selectedCategory;
+
+        // Filtre par distance
+        bool matchesDistance = spot.distance <= _selectedDistance;
+
+        // Applique tous les filtres
+        return matchesQuery && matchesCategory && matchesDistance;
+      }).toList();
+
+      // Debug : Affiche les résultats du filtrage
+      print('Filtres appliqués :');
+      print('Mot-clé : $query');
+      print('Catégorie : $_selectedCategory');
+      print('Distance : $_selectedDistance');
+      print('Résultats : ${filteredSpots.length} spots trouvés');
     });
   }
 
@@ -147,22 +157,6 @@ class _SearchScreenState extends State<SearchScreen> {
                     );
                   }).toList(),
                 ),
-                SizedBox(width: 16.0),
-                Text(
-                    'Distance maximale: $_selectedDistance.toStringAsFixed(1) km'),
-                Slider(
-                  value: _selectedDistance,
-                  min: 0.0,
-                  max: 20.0,
-                  divisions: 20,
-                  label: _selectedDistance.toStringAsFixed(1),
-                  onChanged: (double value) {
-                    setState(() {
-                      _selectedDistance = value;
-                      _filterSpots(_searchController.text);
-                    });
-                  },
-                ),
               ],
             ),
           ),
@@ -188,6 +182,28 @@ class _SearchScreenState extends State<SearchScreen> {
                       );
                     },
                   ),
+          ),
+          Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                Text(
+                    'Distance maximale : ${_selectedDistance.toStringAsFixed(1)} km'),
+                Slider(
+                  value: _selectedDistance,
+                  min: 0.0,
+                  max: 20.0,
+                  divisions: 20,
+                  label: _selectedDistance.toStringAsFixed(1),
+                  onChanged: (double value) {
+                    setState(() {
+                      _selectedDistance = value;
+                      _filterSpots(_searchController.text);
+                    });
+                  },
+                ),
+              ],
+            ),
           ),
         ],
       ),
