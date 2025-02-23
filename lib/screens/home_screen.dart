@@ -106,6 +106,9 @@ class _HomeContentScreenState extends State<HomeContentScreen> {
                       image: spots[index]['image']!,
                       distance: 0.0,
                       category: 'Non catégorisé',
+                      city: 'Non spécifié',
+                      latitude: 0.0,
+                      longitude: 0.0,
                     ),
                     onAddToFavorites: (spot) {
                       setState(() {

@@ -17,6 +17,9 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
           'https://www.salzburg.info/deskline/infrastruktur/objekte/zoo-salzburg-hellbrunn_4106/image-thumb__909277__slider-main/Familie%20Wei%C3%9Fhandgibbon_29519656.jpg',
       distance: 10.0,
       category: 'Nature',
+      city: 'Paris',
+      latitude: 48.8566,
+      longitude: 2.3522,
     ),
     Spot(
       id: 2,
@@ -26,6 +29,9 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
           'https://www.salzburg.info/deskline/infrastruktur/objekte/zoo-salzburg-hellbrunn_4106/image-thumb__909277__slider-main/Familie%20Wei%C3%9Fhandgibbon_29519656.jpg',
       distance: 15.0,
       category: 'Sport',
+      city: 'Lyon',
+      latitude: 45.7640,
+      longitude: 4.8357,
     ),
   ];
 
