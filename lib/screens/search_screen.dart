@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart'; // Importe le package geolocator
 import '../models/spot_model.dart'; // Importe le modèle Spot
+import 'package:geocoding/geocoding.dart';
 
 class SearchScreen extends StatefulWidget {
   @override
@@ -14,7 +15,8 @@ class _SearchScreenState extends State<SearchScreen> {
       id: 1,
       title: 'Spot 1',
       description: 'Un endroit magnifique pour se détendre.',
-      image: 'https://via.placeholder.com/150',
+      image:
+          'https://media.admagazine.fr/photos/64edaa909239e9b3e0bfdf20/16:9/w_2992,h_1683,c_limit/GettyImages-1319377120.jpg',
       category: 'Nature',
       distance: 0.0, // La distance sera calculée dynamiquement
       city: 'Paris',
@@ -25,7 +27,8 @@ class _SearchScreenState extends State<SearchScreen> {
       id: 2,
       title: 'Spot 2',
       description: 'Parfait pour les amateurs de nature.',
-      image: 'https://via.placeholder.com/150',
+      image:
+          'https://odysseedelaterre.fr/wp-content/uploads/2024/09/plus-haute-montagne-monde.jpg',
       category: 'Nature',
       distance: 0.0, // La distance sera calculée dynamiquement
       city: 'Lyon',
@@ -36,7 +39,8 @@ class _SearchScreenState extends State<SearchScreen> {
       id: 3,
       title: 'Spot 3',
       description: 'Un lieu historique à ne pas manquer.',
-      image: 'https://via.placeholder.com/150',
+      image:
+          'https://monsieurmadameexplore.com/wp-content/uploads/2021/05/Spirit-Island_3.jpg',
       category: 'Histoire',
       distance: 0.0, // La distance sera calculée dynamiquement
       city: 'Marseille',
@@ -45,30 +49,19 @@ class _SearchScreenState extends State<SearchScreen> {
     ),
   ];
 
-  // Liste des spots filtrés
-  List<Spot> filteredSpots = [];
-
-  // Contrôleur pour le champ de recherche
+  // Variables d'état
   final TextEditingController _searchController = TextEditingController();
-
-  // Filtres temporaires (visuels)
+  final TextEditingController _locationController = TextEditingController();
   String _tempCategory = 'Toutes';
   double _tempDistance = 20.0;
-
-  // Filtres appliqués (utilisés pour filtrer la liste)
-  String _appliedCategory = 'Toutes';
-  double _appliedDistance = 20.0;
-
-  // Catégories disponibles
+  List<Spot> filteredSpots = [];
   final List<String> categories = ['Toutes', 'Nature', 'Histoire', 'Culture'];
-
-  // Localisation de l'utilisateur
   Position? _userPosition;
 
   @override
   void initState() {
     super.initState();
-    // Obtenir la localisation de l'utilisateur au démarrage
+    filteredSpots = allSpots; // Initialise avec tous les spots
     _getUserLocation();
   }
 
@@ -127,8 +120,8 @@ class _SearchScreenState extends State<SearchScreen> {
   void _applyFilters() {
     setState(() {
       // Applique les filtres temporaires
-      _appliedCategory = _tempCategory;
-      _appliedDistance = _tempDistance;
+      _tempCategory = _tempCategory;
+      _tempDistance = _tempDistance;
 
       // Filtre les spots
       filteredSpots = allSpots.where((spot) {
@@ -143,10 +136,10 @@ class _SearchScreenState extends State<SearchScreen> {
 
         // Filtre par catégorie
         bool matchesCategory =
-            _appliedCategory == 'Toutes' || spot.category == _appliedCategory;
+            _tempCategory == 'Toutes' || spot.category == _tempCategory;
 
         // Filtre par distance
-        bool matchesDistance = spot.distance <= _appliedDistance;
+        bool matchesDistance = spot.distance <= _tempDistance;
 
         // Applique tous les filtres
         return matchesQuery && matchesCategory && matchesDistance;
@@ -155,10 +148,57 @@ class _SearchScreenState extends State<SearchScreen> {
       // Debug : Affiche les résultats du filtrage
       print('Filtres appliqués :');
       print('Mot-clé : ${_searchController.text}');
-      print('Catégorie : $_appliedCategory');
-      print('Distance : $_appliedDistance');
+      print('Catégorie : $_tempCategory');
+      print('Distance : $_tempDistance');
       print('Résultats : ${filteredSpots.length} spots trouvés');
     });
+  }
+
+  Future<void> _setManualLocation() async {
+    String location = _locationController.text.trim();
+    if (location.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Localisation manuelle définie : $location')),
+      );
+      return;
+    }
+
+    try {
+      List<Location> locations = await locationFromAddress(location);
+      if (locations.isNotEmpty) {
+        Location firstLocation = locations.first;
+        setState(() {
+          _userPosition = Position(
+            latitude: firstLocation.latitude,
+            longitude: firstLocation.longitude,
+            timestamp: DateTime.now(),
+            accuracy: 0.0,
+            altitude: 0.0,
+            altitudeAccuracy: 0.0,
+            heading: 0.0,
+            headingAccuracy: 0.0,
+            speed: 0.0,
+            speedAccuracy: 0.0,
+          );
+        });
+
+        _calculateDistances();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Localisation mise à jour: $location')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Localisation non trouvée: $location')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content:
+                Text('Erreur lors de la mise à jour de la localisation: $e')),
+      );
+    }
   }
 
   @override
@@ -182,6 +222,27 @@ class _SearchScreenState extends State<SearchScreen> {
       ),
       body: Column(
         children: [
+          Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _locationController,
+                    decoration: InputDecoration(
+                      hintText: 'Entrez une localisation',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+                SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: _setManualLocation,
+                  child: Text('Valider'),
+                ),
+              ],
+            ),
+          ),
           // Filtre par catégorie
           Padding(
             padding: EdgeInsets.all(16.0),
