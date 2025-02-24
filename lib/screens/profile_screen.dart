@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'edit_profile_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   @override
@@ -29,6 +30,18 @@ class ProfileScreen extends StatelessWidget {
                       style: TextStyle(fontSize: 24),
                     ),
                     Text('aang@avatar.com'),
+                    SizedBox(height: 10),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => EditProfileScreen(),
+                          ),
+                        );
+                      },
+                      child: Text('Modifier'),
+                    ),
                   ],
                 ),
               ],
