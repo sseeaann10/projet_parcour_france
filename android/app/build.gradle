@@ -1,3 +1,16 @@
+// Le bloc buildscript doit être placé avant le bloc plugins
+buildscript {
+    ext.kotlin_version = '1.9.22' // Assure-toi que Kotlin est compatible
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.2.1' // Mettre à jour ici
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
 plugins {
     id "com.android.application"
     id "kotlin-android"
@@ -11,12 +24,12 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17 // Mettre à jour ici
+        targetCompatibility = JavaVersion.VERSION_17 // Mettre à jour ici
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_1_8
+        jvmTarget = '17' // Mettre à jour ici
     }
 
     defaultConfig {
