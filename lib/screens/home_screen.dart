@@ -108,6 +108,8 @@ class _HomeContentScreenState extends State<HomeContentScreen> {
                   builder: (context) => SpotDetailsScreen(
                     spot: Spot(
                       id: 0,
+                      userId: '0',
+                      rating: 0.0,
                       title: spots[index]['title']!,
                       description: spots[index]['description']!,
                       image: spots[index]['image']!,

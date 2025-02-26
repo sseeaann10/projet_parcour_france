@@ -8,6 +8,8 @@ class Spot {
   final String city;
   final double latitude;
   final double longitude;
+  final String userId;
+  final double rating;
 
   Spot({
     required this.id,
@@ -19,6 +21,8 @@ class Spot {
     required this.city,
     required this.latitude,
     required this.longitude,
+    required this.userId,
+    required this.rating,
   });
 
   factory Spot.fromJson(Map<String, dynamic> json) {
@@ -31,6 +35,8 @@ class Spot {
         category: json['category'],
         city: json['city'],
         latitude: json['latitude'],
-        longitude: json['longitude']);
+        longitude: json['longitude'],
+        userId: json['userId'],
+        rating: json['rating']);
   }
 }

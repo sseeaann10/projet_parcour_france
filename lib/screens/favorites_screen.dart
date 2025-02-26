@@ -11,6 +11,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   List<Spot> favorites = [
     Spot(
       id: 1,
+      userId: '1',
+      rating: 4.5,
       title: 'Spot 1',
       description: 'Description du spot mon gars',
       image:
@@ -23,6 +25,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     ),
     Spot(
       id: 2,
+      userId: '2',
+      rating: 4.0,
       title: 'Spot 2',
       description: 'Description du spot 2',
       image:

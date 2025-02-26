@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:card_swiper/card_swiper.dart';
 import '../models/spot_model.dart';
+import '../models/review_model.dart';
 import '../providers/auth_provider.dart';
 import 'package:provider/provider.dart';
 import '../screens/signup_screen.dart';
@@ -26,7 +27,45 @@ class _SpotDetailsScreenState extends State<SpotDetailsScreen> {
     'https://www.cherifaistesvalises.com/wp-content/uploads/2023/05/Shutterstock_2070432857.jpg',
   ];
 
+  final List<Review> reviews = [
+    Review(
+      id: '1',
+      userId: '1',
+      rating: 4.5,
+      comment: 'Très bon spot',
+      date: DateTime.now(),
+    ),
+  ];
+
+  final TextEditingController _commentController = TextEditingController();
+
   int _currentIndex = 0;
+
+  double _userRating = 0.0;
+
+  void _submitReview() {
+    if (_commentController.text.isNotEmpty && _userRating > 0) {
+      final review = Review(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        userId: widget.spot.userId,
+        rating: _userRating,
+        comment: _commentController.text,
+        date: DateTime.now(),
+      );
+      setState(() {
+        reviews.add(review);
+        _commentController.clear();
+        _userRating = 0;
+      });
+
+      _commentController.clear();
+      _userRating = 0;
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Veuillez remplir tous les champs')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -84,6 +123,49 @@ class _SpotDetailsScreenState extends State<SpotDetailsScreen> {
                   _currentIndex = index;
                 });
               },
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.spot.title,
+                  style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 16.0),
+                TextField(
+                  controller: _commentController,
+                  decoration: InputDecoration(
+                    labelText: 'Commentaire',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 3,
+                ),
+                SizedBox(height: 16.0),
+                Text('Notez ce spot :'),
+                Row(
+                  children: List.generate(
+                      5,
+                      (index) => IconButton(
+                            icon: Icon(Icons.star,
+                                color: _userRating >= index + 1
+                                    ? Colors.yellow
+                                    : Colors.grey),
+                            onPressed: () {
+                              setState(() {
+                                _userRating = index + 1;
+                              });
+                            },
+                          )),
+                ),
+                SizedBox(height: 16.0),
+                ElevatedButton(
+                  onPressed: _submitReview,
+                  child: Text('Envoyer'),
+                ),
+              ],
             ),
           ),
           Row(

@@ -13,6 +13,8 @@ class _SearchScreenState extends State<SearchScreen> {
   final List<Spot> allSpots = [
     Spot(
       id: 1,
+      userId: '1',
+      rating: 4.5,
       title: 'Spot 1',
       description: 'Un endroit magnifique pour se détendre.',
       image:
@@ -25,6 +27,8 @@ class _SearchScreenState extends State<SearchScreen> {
     ),
     Spot(
       id: 2,
+      userId: '2',
+      rating: 4.0,
       title: 'Spot 2',
       description: 'Parfait pour les amateurs de nature.',
       image:
@@ -37,6 +41,8 @@ class _SearchScreenState extends State<SearchScreen> {
     ),
     Spot(
       id: 3,
+      userId: '3',
+      rating: 4.2,
       title: 'Spot 3',
       description: 'Un lieu historique à ne pas manquer.',
       image:
