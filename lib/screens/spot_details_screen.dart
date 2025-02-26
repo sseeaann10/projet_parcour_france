@@ -43,13 +43,17 @@ class _SpotDetailsScreenState extends State<SpotDetailsScreen> {
             height: 200,
             child: Swiper(
               itemBuilder: (BuildContext context, int index) {
-                return Container(
-                  margin: EdgeInsets.symmetric(horizontal: 5.0),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10.0),
-                    image: DecorationImage(
-                      image: NetworkImage(images[index]),
-                      fit: BoxFit.cover,
+                return InteractiveViewer(
+                  minScale: 0.5,
+                  maxScale: 3.0,
+                  child: Container(
+                    margin: EdgeInsets.symmetric(horizontal: 5.0),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10.0),
+                      image: DecorationImage(
+                        image: NetworkImage(images[index]),
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
                 );

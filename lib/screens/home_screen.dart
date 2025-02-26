@@ -86,7 +86,14 @@ class _HomeContentScreenState extends State<HomeContentScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Spots à proximité'),
+        title: Text(
+          'mesbonspots',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: true,
       ),
       body: ListView.builder(
         itemCount: spots.length,
