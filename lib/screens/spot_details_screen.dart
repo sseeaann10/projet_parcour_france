@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:card_swiper/card_swiper.dart';
 import '../models/spot_model.dart';
+import '../providers/auth_provider.dart';
+import 'package:provider/provider.dart';
+import '../screens/signup_screen.dart';
 
 class SpotDetailsScreen extends StatefulWidget {
   final Spot spot;
@@ -27,6 +30,7 @@ class _SpotDetailsScreenState extends State<SpotDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.spot.title),
@@ -34,6 +38,19 @@ class _SpotDetailsScreenState extends State<SpotDetailsScreen> {
           IconButton(
             icon: Icon(Icons.favorite_border),
             onPressed: () => widget.onAddToFavorites(widget.spot),
+          ),
+          IconButton(
+            icon: Icon(Icons.login),
+            onPressed: () {
+              if (authProvider.isLoggedIn) {
+                authProvider.logout();
+              } else {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => SignUpScreen()),
+                );
+              }
+            },
           ),
         ],
       ),
