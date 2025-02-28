@@ -20,22 +20,8 @@ class SpotDetailsScreen extends StatefulWidget {
 }
 
 class _SpotDetailsScreenState extends State<SpotDetailsScreen> {
-  // Liste d'images simulées pour la galerie
-  final List<String> images = [
-    'https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.tripadvisor.fr%2FAttraction_Review-g1221107-d209763-Reviews-Parc_Asterix-Plailly_Chantilly_Oise_Hauts_de_France.html&psig=AOvVaw0ObsezGtM0IxwSEO5Zc_aB&ust=1740617710366000&source=images&cd=vfe&opi=89978449&ved=0CBYQjRxqFwoTCPCu8bSQ4IsDFQAAAAAdAAAAABAE',
-    'https://cdn.sortiraparis.com/images/80/102768/925084-l-ete-gaulois-au-parc-asterix-img-9028.jpg',
-    'https://www.cherifaistesvalises.com/wp-content/uploads/2023/05/Shutterstock_2070432857.jpg',
-  ];
-
-  final List<Review> reviews = [
-    Review(
-      id: '1',
-      userId: '1',
-      rating: 4.5,
-      comment: 'Très bon spot',
-      date: DateTime.now(),
-    ),
-  ];
+  final List<String> images = [];
+  final List<Review> reviews = [];
 
   final TextEditingController _commentController = TextEditingController();
 

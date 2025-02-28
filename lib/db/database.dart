@@ -13,6 +13,11 @@ class Users extends Table {
   TextColumn get password => text()();
 }
 
+class Categories extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text()();
+}
+
 class Spots extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get userId => text()();
@@ -21,13 +26,13 @@ class Spots extends Table {
   TextColumn get description => text()();
   TextColumn get image => text()();
   RealColumn get distance => real()();
-  TextColumn get category => text()();
+  TextColumn get category => text().references(Categories, #name)();
   TextColumn get city => text()();
   RealColumn get latitude => real()();
   RealColumn get longitude => real()();
 }
 
-@DriftDatabase(tables: [Users, Spots])
+@DriftDatabase(tables: [Users, Categories, Spots])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
@@ -35,8 +40,12 @@ class AppDatabase extends _$AppDatabase {
   int get schemaVersion => 1;
 
   Future<List<User>> get allUsers => select(users).get();
-
+  Future<List<Category>> get allCategories => select(categories).get();
   Future<List<Spot>> get allSpots => select(spots).get();
+
+  Future<int> insertCategory(CategoriesCompanion category) {
+    return into(categories).insert(category);
+  }
 
   Future<int> updateUser(UsersCompanion user) async {
     await (update(users)..where((u) => u.id.equals(user.id.value)))
@@ -67,42 +76,6 @@ class AppDatabase extends _$AppDatabase {
 
   Future<int> deleteSpot(int id) {
     return (delete(spots)..where((s) => s.id.equals(id))).go();
-  }
-
-  Future<void> insertInitialSpots() async {
-    final initialSpots = [
-      SpotsCompanion(
-        userId: const Value('1'),
-        rating: const Value(4.5),
-        title: const Value('Parc Astérix'),
-        description: const Value(
-            'Un parc d\'attractions sur le thème d\'Astérix et Obélix'),
-        image: const Value(
-            'https://cdn.sortiraparis.com/images/80/102768/925084-l-ete-gaulois-au-parc-asterix-img-9028.jpg'),
-        distance: const Value(0.0),
-        category: const Value('Loisirs'),
-        city: const Value('Plailly'),
-        latitude: const Value(49.1341),
-        longitude: const Value(2.5707),
-      ),
-      SpotsCompanion(
-        userId: const Value('2'),
-        rating: const Value(4.2),
-        title: const Value('Mont Saint-Michel'),
-        description: const Value('Une île fortifiée avec une abbaye médiévale'),
-        image: const Value(
-            'https://www.france-voyage.com/visuals/photos/mont-saint-michel-1_w1000.jpg'),
-        distance: const Value(0.0),
-        category: const Value('Histoire'),
-        city: const Value('Le Mont-Saint-Michel'),
-        latitude: const Value(48.6361),
-        longitude: const Value(-1.5115),
-      ),
-    ];
-
-    for (final spot in initialSpots) {
-      await into(spots).insert(spot);
-    }
   }
 
   static LazyDatabase _openConnection() {

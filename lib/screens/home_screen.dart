@@ -28,6 +28,29 @@ class _HomeScreenState extends State<HomeScreen> {
     ProfileScreen(),
   ];
 
+  void _onItemTapped(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+
+    if (index == 1) {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      if (authProvider.isLoggedIn) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => PublishSpotScreen()),
+        );
+      } else {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => LoginScreen(),
+          ),
+        );
+      }
+    }
+  }
+
   void _handleNavigation(int index, BuildContext context) {
     if (index == 2) {
       // Index du bouton "Publier"

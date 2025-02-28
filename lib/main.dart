@@ -8,7 +8,6 @@ import 'db/database.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final database = AppDatabase();
-  await database.insertInitialSpots();
 
   runApp(
     MultiProvider(

@@ -13,6 +13,7 @@ class _SearchScreenState extends State<SearchScreen> {
   List<Spot> allSpots = [];
   List<Spot> filteredSpots = [];
   Map<int, double> spotDistances = {};
+  List<String> categories = ['Toutes'];
 
   // Contrôleur pour le champ de recherche
   final TextEditingController _searchController = TextEditingController();
@@ -25,9 +26,6 @@ class _SearchScreenState extends State<SearchScreen> {
   String _appliedCategory = 'Toutes';
   double _appliedDistance = 20.0;
 
-  // Catégories disponibles
-  final List<String> categories = ['Toutes', 'Nature', 'Histoire', 'Culture'];
-
   // Localisation de l'utilisateur
   Position? _userPosition;
 
@@ -39,6 +37,7 @@ class _SearchScreenState extends State<SearchScreen> {
     super.initState();
     database = AppDatabase();
     _loadSpots();
+    _loadCategories();
     _getUserLocation();
   }
 
@@ -47,6 +46,13 @@ class _SearchScreenState extends State<SearchScreen> {
     setState(() {
       allSpots = spots;
       filteredSpots = spots;
+    });
+  }
+
+  Future<void> _loadCategories() async {
+    final dbCategories = await database.allCategories;
+    setState(() {
+      categories = ['Toutes', ...dbCategories.map((c) => c.name)];
     });
   }
 
