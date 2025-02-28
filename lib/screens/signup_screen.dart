@@ -1,20 +1,51 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:drift/drift.dart' hide Column;
+import '../providers/auth_provider.dart';
+import '../db/database.dart';
 
 class SignUpScreen extends StatelessWidget {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
 
-  void _signUp(BuildContext context) {
-    final email = _emailController.text;
-    final password = _passwordController.text;
-    final username = _usernameController.text;
+  Future<void> _signUp(BuildContext context) async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+    final name = _nameController.text.trim();
 
-    if (email.isNotEmpty && password.isNotEmpty && username.isNotEmpty) {
-      Navigator.pop(context, true);
-    } else {
+    if (email.isEmpty || password.isEmpty || name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Veuillez remplir tous les champs')),
+      );
+      return;
+    }
+
+    final database = Provider.of<AppDatabase>(context, listen: false);
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    try {
+      // Vérifier si l'email existe déjà
+      final users = await database.allUsers;
+      if (users.any((user) => user.email == email)) {
+        throw Exception('Cet email est déjà utilisé');
+      }
+
+      // Créer le nouvel utilisateur
+      final userId = await database.insertUser(
+        UsersCompanion(
+          name: Value(name),
+          email: Value(email),
+          password: Value(password),
+        ),
+      );
+
+      // Connecter l'utilisateur
+      authProvider.login(userId.toString());
+      Navigator.pop(context);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
       );
     }
   }
@@ -30,9 +61,9 @@ class SignUpScreen extends StatelessWidget {
         child: Column(
           children: [
             TextField(
-              controller: _emailController,
+              controller: _nameController,
               decoration: const InputDecoration(
-                labelText: "Nom d'utilisateur",
+                labelText: 'Nom',
                 border: OutlineInputBorder(),
               ),
             ),
@@ -43,6 +74,7 @@ class SignUpScreen extends StatelessWidget {
                 labelText: 'Email',
                 border: OutlineInputBorder(),
               ),
+              keyboardType: TextInputType.emailAddress,
             ),
             const SizedBox(height: 16),
             TextField(
@@ -56,13 +88,7 @@ class SignUpScreen extends StatelessWidget {
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () => _signUp(context),
-              child: const Text('Inscription'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('Déjà un compte ? Connectez-vous'),
+              child: const Text('S\'inscrire'),
             ),
           ],
         ),

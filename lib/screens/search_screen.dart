@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart'; // Pour la géolocalisation
 import 'package:geocoding/geocoding.dart'; // Pour le géocodage
-import '../models/spot_model.dart'; // Importe le modèle Spot
+import '../db/database.dart';
 
 class SearchScreen extends StatefulWidget {
   @override
@@ -9,54 +9,10 @@ class SearchScreen extends StatefulWidget {
 }
 
 class _SearchScreenState extends State<SearchScreen> {
-  // Liste complète des spots (simulée pour l'exemple)
-  final List<Spot> allSpots = [
-    Spot(
-      id: 1,
-      userId: '1',
-      rating: 4.5,
-      title: 'Spot 1',
-      description: 'Un endroit magnifique pour se détendre.',
-      image:
-          'https://monsieurmadameexplore.com/wp-content/uploads/2021/05/Spirit-Island_3.jpg',
-      category: 'Nature',
-      distance: 0.0, // La distance sera calculée dynamiquement
-      city: 'Paris',
-      latitude: 48.8566,
-      longitude: 2.3522,
-    ),
-    Spot(
-      id: 2,
-      userId: '2',
-      rating: 4.0,
-      title: 'Spot 2',
-      description: 'Parfait pour les amateurs de nature.',
-      image:
-          'https://odysseedelaterre.fr/wp-content/uploads/2024/09/plus-haute-montagne-monde.jpg',
-      category: 'Nature',
-      distance: 0.0, // La distance sera calculée dynamiquement
-      city: 'Lyon',
-      latitude: 45.7640,
-      longitude: 4.8357,
-    ),
-    Spot(
-      id: 3,
-      userId: '3',
-      rating: 4.2,
-      title: 'Spot 3',
-      description: 'Un lieu historique à ne pas manquer.',
-      image:
-          'https://monsieurmadameexplore.com/wp-content/uploads/2021/05/Spirit-Island_3.jpg',
-      category: 'Histoire',
-      distance: 0.0, // La distance sera calculée dynamiquement
-      city: 'Marseille',
-      latitude: 43.2965,
-      longitude: 5.3698,
-    ),
-  ];
-
-  // Liste des spots filtrés
+  late AppDatabase database;
+  List<Spot> allSpots = [];
   List<Spot> filteredSpots = [];
+  Map<int, double> spotDistances = {};
 
   // Contrôleur pour le champ de recherche
   final TextEditingController _searchController = TextEditingController();
@@ -81,8 +37,17 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   void initState() {
     super.initState();
-    // Obtenir la localisation de l'utilisateur au démarrage
+    database = AppDatabase();
+    _loadSpots();
     _getUserLocation();
+  }
+
+  Future<void> _loadSpots() async {
+    final spots = await database.allSpots;
+    setState(() {
+      allSpots = spots;
+      filteredSpots = spots;
+    });
   }
 
   // Fonction pour obtenir la localisation de l'utilisateur
@@ -139,8 +104,9 @@ class _SearchScreenState extends State<SearchScreen> {
               spot.longitude,
             ) /
             1000; // Convertir en kilomètres
-        spot.distance = distance;
+        spotDistances[spot.id] = distance;
       }
+      _applyFilters();
     });
   }
 
@@ -167,7 +133,8 @@ class _SearchScreenState extends State<SearchScreen> {
             _appliedCategory == 'Toutes' || spot.category == _appliedCategory;
 
         // Filtre par distance
-        bool matchesDistance = spot.distance <= _appliedDistance;
+        double distance = spotDistances[spot.id] ?? double.infinity;
+        bool matchesDistance = distance <= _appliedDistance;
 
         // Applique tous les filtres
         return matchesQuery && matchesCategory && matchesDistance;

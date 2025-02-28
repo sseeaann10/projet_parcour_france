@@ -1,25 +1,18 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 
-class AuthProvider extends ChangeNotifier {
-  bool _isLoggedIn = false;
-  String? _userName;
-  String? _userId;
+class AuthProvider with ChangeNotifier {
+  String? _currentUserId;
 
-  bool get isLoggedIn => _isLoggedIn;
-  String? get userName => _userName;
-  String? get userId => _userId;
+  bool get isLoggedIn => _currentUserId != null;
+  String? get currentUserId => _currentUserId;
 
-  void login(String userId, String userName) {
-    _isLoggedIn = true;
-    _userName = userName;
-    _userId = userId;
+  void login(String userId) {
+    _currentUserId = userId;
     notifyListeners();
   }
 
   void logout() {
-    _isLoggedIn = false;
-    _userName = null;
-    _userId = null;
+    _currentUserId = null;
     notifyListeners();
   }
 }

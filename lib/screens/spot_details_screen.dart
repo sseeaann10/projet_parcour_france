@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:card_swiper/card_swiper.dart';
-import '../models/spot_model.dart';
 import '../models/review_model.dart';
 import '../providers/auth_provider.dart';
 import 'package:provider/provider.dart';
 import '../screens/signup_screen.dart';
+import '../db/database.dart';
 
 class SpotDetailsScreen extends StatefulWidget {
   final Spot spot;

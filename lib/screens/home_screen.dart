@@ -4,7 +4,7 @@ import 'profile_screen.dart';
 import '../widgets/spot_card.dart';
 import 'favorites_screen.dart';
 import 'spot_details_screen.dart';
-import '../models/spot_model.dart';
+import '../db/database.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -65,22 +65,22 @@ class HomeContentScreen extends StatefulWidget {
 }
 
 class _HomeContentScreenState extends State<HomeContentScreen> {
-  final List<Map<String, String>> spots = [
-    {
-      'title': 'Spot 1',
-      'description': 'Un endroit magnifique pour se détendre.',
-      'image':
-          'https://www.salzburg.info/deskline/infrastruktur/objekte/zoo-salzburg-hellbrunn_4106/image-thumb__909277__slider-main/Familie%20Wei%C3%9Fhandgibbon_29519656.jpg',
-    },
-    {
-      'title': 'Spot 2',
-      'description': 'Parfait pour les amateurs de nature.',
-      'image':
-          'https://picardie.media.tourinsoft.eu/upload/parcsaintpierre8-amiens-somme-picardie.JPG',
-    },
-  ];
+  late AppDatabase database;
+  List<Spot> spots = [];
 
-  final List<Spot> favorites = [];
+  @override
+  void initState() {
+    super.initState();
+    database = AppDatabase();
+    _loadSpots();
+  }
+
+  Future<void> _loadSpots() async {
+    final loadedSpots = await database.allSpots;
+    setState(() {
+      spots = loadedSpots;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -95,42 +95,37 @@ class _HomeContentScreenState extends State<HomeContentScreen> {
         ),
         centerTitle: true,
       ),
-      body: ListView.builder(
-        itemCount: spots.length,
-        itemBuilder: (context, index) {
-          return SpotCard(
-            title: spots[index]['title']!,
-            description: spots[index]['description']!,
-            imageUrl: spots[index]['image']!,
-            onTap: () {
-              Navigator.of(context).push<void>(
-                MaterialPageRoute<void>(
-                  builder: (context) => SpotDetailsScreen(
-                    spot: Spot(
-                      id: 0,
-                      userId: '0',
-                      rating: 0.0,
-                      title: spots[index]['title']!,
-                      description: spots[index]['description']!,
-                      image: spots[index]['image']!,
-                      distance: 0.0,
-                      category: 'Non catégorisé',
-                      city: 'Non spécifié',
-                      latitude: 0.0,
-                      longitude: 0.0,
-                    ),
-                    onAddToFavorites: (spot) {
-                      setState(() {
-                        favorites.add(spot);
-                      });
-                    },
-                  ),
-                ),
-              );
-            },
-          );
-        },
-      ),
+      body: spots.isEmpty
+          ? Center(
+              child: Text('Aucun spot disponible'),
+            )
+          : ListView.builder(
+              itemCount: spots.length,
+              itemBuilder: (context, index) {
+                final spot = spots[index];
+                return SpotCard(
+                  title: spot.title,
+                  description: spot.description,
+                  imageUrl: spot.image,
+                  onTap: () {
+                    Navigator.of(context).push<void>(
+                      MaterialPageRoute<void>(
+                        builder: (context) => SpotDetailsScreen(
+                          spot: spot,
+                          onAddToFavorites: (spot) async {
+                            // Ici, vous pouvez ajouter la logique pour sauvegarder les favoris
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                  content: Text('Spot ajouté aux favoris')),
+                            );
+                          },
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
     );
   }
 }
