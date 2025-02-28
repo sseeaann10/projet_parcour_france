@@ -39,9 +39,8 @@ class SignUpScreen extends StatelessWidget {
           password: Value(password),
         ),
       );
-
       // Connecter l'utilisateur
-      authProvider.login(userId.toString());
+      authProvider.login(userId.toString(), password);
       Navigator.pop(context);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(

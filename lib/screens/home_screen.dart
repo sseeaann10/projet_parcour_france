@@ -5,6 +5,10 @@ import '../widgets/spot_card.dart';
 import 'favorites_screen.dart';
 import 'spot_details_screen.dart';
 import '../db/database.dart';
+import 'publish_spot_screen.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
+import 'login_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -19,9 +23,28 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<Widget> _screens = [
     HomeContentScreen(),
     SearchScreen(),
+    PublishSpotScreen(),
     FavoritesScreen(),
     ProfileScreen(),
   ];
+
+  void _handleNavigation(int index, BuildContext context) {
+    if (index == 2) {
+      // Index du bouton "Publier"
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      if (!authProvider.isLoggedIn) {
+        // Si l'utilisateur n'est pas connecté, rediriger vers l'écran de connexion
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => LoginScreen()),
+        );
+        return;
+      }
+    }
+    setState(() {
+      _currentIndex = index;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,11 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
       body: _screens[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
+        onTap: (index) => _handleNavigation(index, context),
         selectedItemColor: Colors.blue, // Couleur de l'onglet sélectionné
         unselectedItemColor: Colors.grey, // Couleur des autres onglets
         items: [
@@ -44,6 +63,10 @@ class _HomeScreenState extends State<HomeScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.search),
             label: 'Recherche',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.publish),
+            label: 'Publié',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.favorite),

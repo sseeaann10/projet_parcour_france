@@ -21,6 +21,8 @@ class LoginScreen extends StatelessWidget {
 
     final database = Provider.of<AppDatabase>(context, listen: false);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
 
     try {
       final users = await database.allUsers;
@@ -29,10 +31,10 @@ class LoginScreen extends StatelessWidget {
         orElse: () => throw Exception('Identifiants incorrects'),
       );
 
-      authProvider.login(user.id.toString());
-      Navigator.pop(context);
+      authProvider.login(user.id.toString(), user.name);
+      navigator.pop();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(content: Text(e.toString())),
       );
     }
