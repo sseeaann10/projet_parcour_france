@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'package:drift/drift.dart' hide Column;
 import 'screens/home_screen.dart'; // Importe l'écran d'accueil
+import 'screens/profile_screen.dart';
+import 'screens/login_screen.dart';
 import 'providers/auth_provider.dart';
 import 'db/database.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   final database = AppDatabase();
 
   runApp(
@@ -25,12 +29,26 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Bottom Navigation Bar Example',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+      ],
+      child: MaterialApp(
+        title: 'Mon Application',
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+          visualDensity: VisualDensity.adaptivePlatformDensity,
+        ),
+        initialRoute: '/',
+        routes: {
+          '/': (context) => Consumer<AuthProvider>(
+                builder: (context, auth, _) =>
+                    auth.isLoggedIn ? ProfileScreen() : LoginScreen(),
+              ),
+          '/profile': (context) => ProfileScreen(),
+          '/login': (context) => LoginScreen(),
+        },
       ),
-      home: HomeScreen(), // Démarre avec l'écran d'accueil
     );
   }
 }
