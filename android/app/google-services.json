@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "701527012547",
+    "project_id": "projet-france-b3aca",
+    "storage_bucket": "projet-france-b3aca.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:701527012547:android:c807c906bd69f0f7e19e76",
+        "android_client_info": {
+          "package_name": "com.example.projet_parcour_france"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD9cJO4Ou67y1vIeJUBPADNPAoD0LKXS98"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
