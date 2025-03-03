@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/spot_model.dart';
+import '../db/database.dart';
 import 'spot_details_screen.dart';
 
 class FavoritesScreen extends StatefulWidget {
@@ -8,37 +8,27 @@ class FavoritesScreen extends StatefulWidget {
 }
 
 class _FavoritesScreenState extends State<FavoritesScreen> {
-  List<Spot> favorites = [
-    Spot(
-      id: 1,
-      title: 'Spot 1',
-      description: 'Description du spot mon gars',
-      image:
-          'https://www.salzburg.info/deskline/infrastruktur/objekte/zoo-salzburg-hellbrunn_4106/image-thumb__909277__slider-main/Familie%20Wei%C3%9Fhandgibbon_29519656.jpg',
-      distance: 10.0,
-      category: 'Nature',
-      city: 'Paris',
-      latitude: 48.8566,
-      longitude: 2.3522,
-    ),
-    Spot(
-      id: 2,
-      title: 'Spot 2',
-      description: 'Description du spot 2',
-      image:
-          'https://www.salzburg.info/deskline/infrastruktur/objekte/zoo-salzburg-hellbrunn_4106/image-thumb__909277__slider-main/Familie%20Wei%C3%9Fhandgibbon_29519656.jpg',
-      distance: 15.0,
-      category: 'Sport',
-      city: 'Lyon',
-      latitude: 45.7640,
-      longitude: 4.8357,
-    ),
-  ];
+  late AppDatabase database;
+  List<Spot> favorites = [];
 
-  void _removeFavorite(int index) {
+  @override
+  void initState() {
+    super.initState();
+    database = AppDatabase();
+    _loadFavorites();
+  }
+
+  Future<void> _loadFavorites() async {
+    // TODO: Implémenter le chargement des favoris depuis la base de données
+    final spots = await database.allSpots;
     setState(() {
-      favorites.removeAt(index);
+      favorites = spots;
     });
+  }
+
+  void _removeFavorite(int id) async {
+    await database.deleteSpot(id);
+    _loadFavorites();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Spot supprimé des favoris'),
@@ -67,7 +57,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                     subtitle: Text(favorites[index].description),
                     trailing: IconButton(
                       icon: Icon(Icons.favorite, color: Colors.red),
-                      onPressed: () => _removeFavorite(index),
+                      onPressed: () => _removeFavorite(favorites[index].id),
                     ),
                     onTap: () {
                       Navigator.push(

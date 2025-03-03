@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart'; // Importe le package geolocator
-import '../models/spot_model.dart'; // Importe le modèle Spot
+import 'package:geolocator/geolocator.dart'; // Pour la géolocalisation
+import 'package:geocoding/geocoding.dart'; // Pour le géocodage
+import '../db/database.dart';
 
 class SearchScreen extends StatefulWidget {
   @override
@@ -8,45 +9,11 @@ class SearchScreen extends StatefulWidget {
 }
 
 class _SearchScreenState extends State<SearchScreen> {
-  // Liste complète des spots (simulée pour l'exemple)
-  final List<Spot> allSpots = [
-    Spot(
-      id: 1,
-      title: 'Spot 1',
-      description: 'Un endroit magnifique pour se détendre.',
-      image: 'https://via.placeholder.com/150',
-      category: 'Nature',
-      distance: 0.0, // La distance sera calculée dynamiquement
-      city: 'Paris',
-      latitude: 48.8566,
-      longitude: 2.3522,
-    ),
-    Spot(
-      id: 2,
-      title: 'Spot 2',
-      description: 'Parfait pour les amateurs de nature.',
-      image: 'https://via.placeholder.com/150',
-      category: 'Nature',
-      distance: 0.0, // La distance sera calculée dynamiquement
-      city: 'Lyon',
-      latitude: 45.7640,
-      longitude: 4.8357,
-    ),
-    Spot(
-      id: 3,
-      title: 'Spot 3',
-      description: 'Un lieu historique à ne pas manquer.',
-      image: 'https://via.placeholder.com/150',
-      category: 'Histoire',
-      distance: 0.0, // La distance sera calculée dynamiquement
-      city: 'Marseille',
-      latitude: 43.2965,
-      longitude: 5.3698,
-    ),
-  ];
-
-  // Liste des spots filtrés
+  late AppDatabase database;
+  List<Spot> allSpots = [];
   List<Spot> filteredSpots = [];
+  Map<int, double> spotDistances = {};
+  List<String> categories = ['Toutes'];
 
   // Contrôleur pour le champ de recherche
   final TextEditingController _searchController = TextEditingController();
@@ -59,17 +26,34 @@ class _SearchScreenState extends State<SearchScreen> {
   String _appliedCategory = 'Toutes';
   double _appliedDistance = 20.0;
 
-  // Catégories disponibles
-  final List<String> categories = ['Toutes', 'Nature', 'Histoire', 'Culture'];
-
   // Localisation de l'utilisateur
   Position? _userPosition;
+
+  // Contrôleur pour le champ de saisie manuelle de la localisation
+  final TextEditingController _locationController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    // Obtenir la localisation de l'utilisateur au démarrage
+    database = AppDatabase();
+    _loadSpots();
+    _loadCategories();
     _getUserLocation();
+  }
+
+  Future<void> _loadSpots() async {
+    final spots = await database.allSpots;
+    setState(() {
+      allSpots = spots;
+      filteredSpots = spots;
+    });
+  }
+
+  Future<void> _loadCategories() async {
+    final dbCategories = await database.allCategories;
+    setState(() {
+      categories = ['Toutes', ...dbCategories.map((c) => c.name)];
+    });
   }
 
   // Fonction pour obtenir la localisation de l'utilisateur
@@ -96,13 +80,21 @@ class _SearchScreenState extends State<SearchScreen> {
     }
 
     // Obtenir la position de l'utilisateur
-    Position position = await Geolocator.getCurrentPosition();
-    setState(() {
-      _userPosition = position;
-    });
+    try {
+      Position position = await Geolocator.getCurrentPosition();
+      setState(() {
+        _userPosition = position;
+      });
 
-    // Calculer les distances des spots par rapport à l'utilisateur
-    _calculateDistances();
+      // Calculer les distances des spots par rapport à l'utilisateur
+      _calculateDistances();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content:
+                Text('Erreur lors de la récupération de la localisation : $e')),
+      );
+    }
   }
 
   // Fonction pour calculer les distances des spots par rapport à l'utilisateur
@@ -118,8 +110,9 @@ class _SearchScreenState extends State<SearchScreen> {
               spot.longitude,
             ) /
             1000; // Convertir en kilomètres
-        spot.distance = distance;
+        spotDistances[spot.id] = distance;
       }
+      _applyFilters();
     });
   }
 
@@ -146,7 +139,8 @@ class _SearchScreenState extends State<SearchScreen> {
             _appliedCategory == 'Toutes' || spot.category == _appliedCategory;
 
         // Filtre par distance
-        bool matchesDistance = spot.distance <= _appliedDistance;
+        double distance = spotDistances[spot.id] ?? double.infinity;
+        bool matchesDistance = distance <= _appliedDistance;
 
         // Applique tous les filtres
         return matchesQuery && matchesCategory && matchesDistance;
@@ -159,6 +153,61 @@ class _SearchScreenState extends State<SearchScreen> {
       print('Distance : $_appliedDistance');
       print('Résultats : ${filteredSpots.length} spots trouvés');
     });
+  }
+
+  // Fonction pour saisir manuellement la localisation
+  Future<void> _setManualLocation() async {
+    String location = _locationController.text.trim();
+    if (location.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Veuillez entrer une localisation')),
+      );
+      return;
+    }
+
+    try {
+      print('Recherche de la localisation : $location'); // Debug
+      List<Location> locations = await locationFromAddress(location);
+      if (locations.isNotEmpty) {
+        Location firstLocation = locations.first;
+        print(
+            'Localisation trouvée : ${firstLocation.latitude}, ${firstLocation.longitude}'); // Debug
+
+        setState(() {
+          _userPosition = Position(
+            latitude: firstLocation.latitude,
+            longitude: firstLocation.longitude,
+            timestamp: DateTime.now(),
+            accuracy: 0.0,
+            altitude: 0.0,
+            altitudeAccuracy: 0.0,
+            heading: 0.0,
+            headingAccuracy: 0.0,
+            speed: 0.0,
+            speedAccuracy: 0.0,
+          );
+        });
+
+        // Calculer les distances des spots par rapport à la nouvelle localisation
+        _calculateDistances();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Localisation mise à jour : $location')),
+        );
+      } else {
+        print('Localisation non trouvée'); // Debug
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Localisation non trouvée')),
+        );
+      }
+    } catch (e) {
+      print('Erreur lors de la recherche de la localisation : $e'); // Debug
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content:
+                Text('Erreur lors de la recherche de la localisation : $e')),
+      );
+    }
   }
 
   @override
@@ -182,6 +231,28 @@ class _SearchScreenState extends State<SearchScreen> {
       ),
       body: Column(
         children: [
+          // Champ de saisie manuelle de la localisation
+          Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _locationController,
+                    decoration: InputDecoration(
+                      hintText: 'Entrez votre ville ou adresse',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+                SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: _setManualLocation,
+                  child: Text('Valider'),
+                ),
+              ],
+            ),
+          ),
           // Filtre par catégorie
           Padding(
             padding: EdgeInsets.all(16.0),
