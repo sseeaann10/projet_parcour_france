@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../db/database.dart';
+import 'package:provider/provider.dart';
+import '../models/spot.dart';
+import '../providers/spot_provider.dart';
 import 'spot_details_screen.dart';
 
 class FavoritesScreen extends StatefulWidget {
@@ -8,31 +10,27 @@ class FavoritesScreen extends StatefulWidget {
 }
 
 class _FavoritesScreenState extends State<FavoritesScreen> {
-  late AppDatabase database;
   List<Spot> favorites = [];
 
   @override
-  void initState() {
-    super.initState();
-    database = AppDatabase();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
     _loadFavorites();
   }
 
-  Future<void> _loadFavorites() async {
-    // TODO: Implémenter le chargement des favoris depuis la base de données
-    final spots = await database.allSpots;
+  void _loadFavorites() {
+    final spotProvider = Provider.of<SpotProvider>(context, listen: false);
     setState(() {
-      favorites = spots;
+      favorites = spotProvider.spots;
     });
   }
 
-  void _removeFavorite(int id) async {
-    await database.deleteSpot(id);
+  void _removeFavorite(String id) {
+    final spotProvider = Provider.of<SpotProvider>(context, listen: false);
+    spotProvider.removeSpot(id);
     _loadFavorites();
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Spot supprimé des favoris'),
-      ),
+      SnackBar(content: Text('Spot supprimé des favoris')),
     );
   }
 
@@ -52,7 +50,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                 return Card(
                   margin: EdgeInsets.all(8.0),
                   child: ListTile(
-                    leading: Image.network(favorites[index].image),
+                    leading: Image.network(favorites[index].images.first),
                     title: Text(favorites[index].title),
                     subtitle: Text(favorites[index].description),
                     trailing: IconButton(

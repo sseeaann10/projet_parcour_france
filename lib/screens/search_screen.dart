@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:geolocator/geolocator.dart'; // Pour la géolocalisation
 import 'package:geocoding/geocoding.dart'; // Pour le géocodage
-import '../db/database.dart';
+import '../providers/spot_provider.dart';
+import '../models/spot.dart';
+import '../models/category.dart';
 
 class SearchScreen extends StatefulWidget {
   @override
@@ -9,10 +12,10 @@ class SearchScreen extends StatefulWidget {
 }
 
 class _SearchScreenState extends State<SearchScreen> {
-  late AppDatabase database;
+  late SpotProvider spotProvider;
   List<Spot> allSpots = [];
   List<Spot> filteredSpots = [];
-  Map<int, double> spotDistances = {};
+  Map<String, double> spotDistances = {}; // Changé de int à String pour l'ID
   List<String> categories = ['Toutes'];
 
   // Contrôleur pour le champ de recherche
@@ -33,26 +36,25 @@ class _SearchScreenState extends State<SearchScreen> {
   final TextEditingController _locationController = TextEditingController();
 
   @override
-  void initState() {
-    super.initState();
-    database = AppDatabase();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    spotProvider = Provider.of<SpotProvider>(context, listen: false);
     _loadSpots();
     _loadCategories();
     _getUserLocation();
   }
 
-  Future<void> _loadSpots() async {
-    final spots = await database.allSpots;
+  void _loadSpots() {
     setState(() {
-      allSpots = spots;
-      filteredSpots = spots;
+      allSpots = spotProvider.spots;
+      filteredSpots = allSpots;
     });
   }
 
-  Future<void> _loadCategories() async {
-    final dbCategories = await database.allCategories;
+  void _loadCategories() {
+    final categories = ['Toutes', ...staticCategories.map((c) => c.name)];
     setState(() {
-      categories = ['Toutes', ...dbCategories.map((c) => c.name)];
+      this.categories = categories;
     });
   }
 
@@ -110,7 +112,7 @@ class _SearchScreenState extends State<SearchScreen> {
               spot.longitude,
             ) /
             1000; // Convertir en kilomètres
-        spotDistances[spot.id] = distance;
+        spotDistances[spot.id.toString()] = distance;
       }
       _applyFilters();
     });
@@ -139,7 +141,7 @@ class _SearchScreenState extends State<SearchScreen> {
             _appliedCategory == 'Toutes' || spot.category == _appliedCategory;
 
         // Filtre par distance
-        double distance = spotDistances[spot.id] ?? double.infinity;
+        double distance = spotDistances[spot.id.toString()] ?? double.infinity;
         bool matchesDistance = distance <= _appliedDistance;
 
         // Applique tous les filtres
@@ -287,7 +289,8 @@ class _SearchScreenState extends State<SearchScreen> {
                       return Card(
                         margin: EdgeInsets.all(8.0),
                         child: ListTile(
-                          leading: Image.network(filteredSpots[index].image),
+                          leading:
+                              Image.network(filteredSpots[index].images.first),
                           title: Text(filteredSpots[index].title),
                           subtitle: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -295,7 +298,7 @@ class _SearchScreenState extends State<SearchScreen> {
                               Text(filteredSpots[index].description),
                               Text('Ville : ${filteredSpots[index].city}'),
                               Text(
-                                  'Distance : ${filteredSpots[index].distance.toStringAsFixed(1)} km'),
+                                  'Distance : ${spotDistances[filteredSpots[index].id.toString()]?.toStringAsFixed(1) ?? 'N/A'} km'),
                             ],
                           ),
                         ),

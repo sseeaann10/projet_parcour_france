@@ -4,10 +4,11 @@ import 'profile_screen.dart';
 import '../widgets/spot_card.dart';
 import 'favorites_screen.dart';
 import 'spot_details_screen.dart';
-import '../db/database.dart';
 import 'publish_spot_screen.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/spot_provider.dart';
+import '../models/spot.dart';
 import 'login_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -111,20 +112,18 @@ class HomeContentScreen extends StatefulWidget {
 }
 
 class _HomeContentScreenState extends State<HomeContentScreen> {
-  late AppDatabase database;
   List<Spot> spots = [];
 
   @override
-  void initState() {
-    super.initState();
-    database = AppDatabase();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
     _loadSpots();
   }
 
-  Future<void> _loadSpots() async {
-    final loadedSpots = await database.allSpots;
+  void _loadSpots() {
+    final spotProvider = Provider.of<SpotProvider>(context, listen: false);
     setState(() {
-      spots = loadedSpots;
+      spots = spotProvider.spots;
     });
   }
 
@@ -152,7 +151,7 @@ class _HomeContentScreenState extends State<HomeContentScreen> {
                 return SpotCard(
                   title: spot.title,
                   description: spot.description,
-                  imageUrl: spot.image,
+                  imageUrl: spot.images.first,
                   onTap: () {
                     Navigator.of(context).push<void>(
                       MaterialPageRoute<void>(

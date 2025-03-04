@@ -29,9 +29,9 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      await Provider.of<AuthProvider>(context, listen: false).signIn(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
+      Provider.of<AuthProvider>(context, listen: false).login(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
       );
       Navigator.of(context).pushReplacementNamed('/');
     } catch (e) {

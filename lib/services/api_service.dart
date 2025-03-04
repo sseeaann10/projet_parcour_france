@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../db/database.dart';
-import 'package:drift/drift.dart';
+import '../models/spot.dart';
+import '../providers/spot_provider.dart';
 
 class ApiService {
   Future<List<Spot>> getSpots() async {
@@ -15,8 +15,8 @@ class ApiService {
                 rating: json['rating'].toDouble(),
                 title: json['title'],
                 description: json['description'],
-                image: json['image'],
-                distance: json['distance'].toDouble(),
+                images: List<String>.from(json['images'] ?? []),
+                address: json['address'] ?? '',
                 category: json['category'],
                 city: json['city'],
                 latitude: json['latitude'].toDouble(),
