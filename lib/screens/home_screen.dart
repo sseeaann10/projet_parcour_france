@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'search_screen.dart';
 import 'profile_screen.dart';
 import '../widgets/spot_card.dart';
+import '../widgets/map_view.dart';
 import 'favorites_screen.dart';
 import 'spot_details_screen.dart';
 import 'publish_spot_screen.dart';
@@ -113,6 +114,7 @@ class HomeContentScreen extends StatefulWidget {
 
 class _HomeContentScreenState extends State<HomeContentScreen> {
   List<Spot> spots = [];
+  bool _showMapView = false;
 
   @override
   void didChangeDependencies() {
@@ -127,6 +129,21 @@ class _HomeContentScreenState extends State<HomeContentScreen> {
     });
   }
 
+  void _navigateToSpotDetails(Spot spot) {
+    Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (context) => SpotDetailsScreen(
+          spot: spot,
+          onAddToFavorites: (spot) async {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Spot ajouté aux favoris')),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -139,38 +156,38 @@ class _HomeContentScreenState extends State<HomeContentScreen> {
           ),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(_showMapView ? Icons.list : Icons.map),
+            onPressed: () {
+              setState(() {
+                _showMapView = !_showMapView;
+              });
+            },
+          ),
+        ],
       ),
       body: spots.isEmpty
           ? Center(
               child: Text('Aucun spot disponible'),
             )
-          : ListView.builder(
-              itemCount: spots.length,
-              itemBuilder: (context, index) {
-                final spot = spots[index];
-                return SpotCard(
-                  title: spot.title,
-                  description: spot.description,
-                  imageUrl: spot.images.first,
-                  onTap: () {
-                    Navigator.of(context).push<void>(
-                      MaterialPageRoute<void>(
-                        builder: (context) => SpotDetailsScreen(
-                          spot: spot,
-                          onAddToFavorites: (spot) async {
-                            // Ici, vous pouvez ajouter la logique pour sauvegarder les favoris
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                  content: Text('Spot ajouté aux favoris')),
-                            );
-                          },
-                        ),
-                      ),
+          : _showMapView
+              ? MapView(
+                  spots: spots,
+                  onSpotTap: _navigateToSpotDetails,
+                )
+              : ListView.builder(
+                  itemCount: spots.length,
+                  itemBuilder: (context, index) {
+                    final spot = spots[index];
+                    return SpotCard(
+                      title: spot.title,
+                      description: spot.description,
+                      imageUrl: spot.images.first,
+                      onTap: () => _navigateToSpotDetails(spot),
                     );
                   },
-                );
-              },
-            ),
+                ),
     );
   }
 }

@@ -15,18 +15,27 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _usernameController = TextEditingController();
-  final _bioController = TextEditingController();
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _addressController = TextEditingController();
   String? _selectedImagePath;
   bool _isEditing = false;
+  final _databaseService = DatabaseService();
 
   @override
   void initState() {
     super.initState();
+    _loadUserData();
+  }
+
+  void _loadUserData() {
     final user = Provider.of<AuthProvider>(context, listen: false).currentUser;
     if (user != null) {
-      _usernameController.text = user.name;
-      _bioController.text = '';
+      _nameController.text = user.name;
+      _emailController.text = user.email;
+      _phoneController.text = user.phone ?? '';
+      _addressController.text = user.address ?? '';
     }
   }
 
@@ -41,12 +50,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  void _saveProfile() {
+  Future<void> _saveProfile() async {
     if (_formKey.currentState!.validate()) {
-      // TODO: Implémenter la sauvegarde du profil avec l'API
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Profil mis à jour avec succès')),
-      );
+      final user =
+          Provider.of<AuthProvider>(context, listen: false).currentUser;
+      if (user != null) {
+        try {
+          await _databaseService.updateUserProfile(user.id, {
+            'name': _nameController.text,
+            'phone': _phoneController.text,
+            'address': _addressController.text,
+            'photoUrl': _selectedImagePath ?? user.photoUrl,
+          });
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Profil mis à jour avec succès')),
+          );
+          setState(() {
+            _isEditing = false;
+          });
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Erreur lors de la mise à jour: $e')),
+          );
+        }
+      }
     }
   }
 
@@ -61,28 +89,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
-                'Connectez-vous pour accéder à votre profil',
-                style: TextStyle(fontSize: 16),
-              ),
-              SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () => Navigator.pushNamed(context, '/login'),
-                child: Text('Se connecter'),
-                style: ElevatedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                ),
-              ),
+              Text('Connectez-vous pour voir votre profil'),
               SizedBox(height: 16),
-              OutlinedButton(
+              ElevatedButton(
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => LoginScreen()),
+                ),
+                child: Text('Se connecter'),
+              ),
+              TextButton(
                 onPressed: () => Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => SignUpScreen()),
                 ),
                 child: Text('Créer un compte'),
-                style: OutlinedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                ),
               ),
             ],
           ),
@@ -92,21 +113,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Mon Profil'),
+        title: Text('Profil'),
         actions: [
           IconButton(
-            icon: Icon(Icons.edit),
+            icon: Icon(_isEditing ? Icons.close : Icons.edit),
             onPressed: () {
               setState(() {
-                _isEditing = true;
+                if (_isEditing) {
+                  _loadUserData();
+                }
+                _isEditing = !_isEditing;
               });
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.logout),
-            onPressed: () {
-              Provider.of<AuthProvider>(context, listen: false).logout();
-              Navigator.pushReplacementNamed(context, '/');
             },
           ),
         ],
@@ -118,87 +135,88 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Stack(
-                children: [
-                  CircleAvatar(
-                    radius: 60,
-                    backgroundImage: _selectedImagePath != null
-                        ? FileImage(File(_selectedImagePath!))
-                        : (user.photoUrl != null
-                            ? NetworkImage(user.photoUrl!) as ImageProvider
-                            : AssetImage('assets/images/default_avatar.png')),
-                  ),
-                  if (_isEditing)
-                    Positioned(
-                      right: 0,
-                      bottom: 0,
-                      child: CircleAvatar(
-                        backgroundColor: Theme.of(context).primaryColor,
-                        radius: 20,
-                        child: IconButton(
-                          icon: Icon(Icons.camera_alt, color: Colors.white),
-                          onPressed: _pickImage,
+              GestureDetector(
+                onTap: _isEditing ? _pickImage : null,
+                child: Stack(
+                  children: [
+                    CircleAvatar(
+                      radius: 60,
+                      backgroundImage: _selectedImagePath != null
+                          ? FileImage(File(_selectedImagePath!))
+                          : (user.photoUrl != null
+                              ? NetworkImage(user.photoUrl!)
+                              : null) as ImageProvider?,
+                      child:
+                          (user.photoUrl == null && _selectedImagePath == null)
+                              ? Icon(Icons.person, size: 60)
+                              : null,
+                    ),
+                    if (_isEditing)
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: Container(
+                          padding: EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).primaryColor,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.camera_alt,
+                            color: Colors.white,
+                            size: 20,
+                          ),
                         ),
                       ),
-                    ),
-                ],
+                  ],
+                ),
               ),
               SizedBox(height: 24),
-              if (!_isEditing) ...[
-                Text(
-                  user.name,
-                  style: Theme.of(context).textTheme.headlineSmall,
+              TextFormField(
+                controller: _nameController,
+                enabled: _isEditing,
+                decoration: InputDecoration(
+                  labelText: 'Nom',
+                  border: OutlineInputBorder(),
                 ),
-                SizedBox(height: 8),
-                Text(
-                  user.email,
-                  style: Theme.of(context).textTheme.bodyLarge,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Veuillez entrer votre nom';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 16),
+              TextFormField(
+                controller: _emailController,
+                enabled: false,
+                decoration: InputDecoration(
+                  labelText: 'Email',
+                  border: OutlineInputBorder(),
                 ),
-                if (_bioController.text.isNotEmpty) ...[
-                  SizedBox(height: 16),
-                  Text(
-                    _bioController.text,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-                SizedBox(height: 24),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    setState(() {
-                      _isEditing = true;
-                    });
-                  },
-                  icon: Icon(Icons.edit),
-                  label: Text('Modifier le profil'),
-                  style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                  ),
+              ),
+              SizedBox(height: 16),
+              TextFormField(
+                controller: _phoneController,
+                enabled: _isEditing,
+                decoration: InputDecoration(
+                  labelText: 'Téléphone',
+                  border: OutlineInputBorder(),
                 ),
-              ] else ...[
-                TextFormField(
-                  controller: _usernameController,
-                  decoration: InputDecoration(
-                    labelText: 'Nom d\'utilisateur',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Veuillez entrer un nom d\'utilisateur';
-                    }
-                    return null;
-                  },
+                keyboardType: TextInputType.phone,
+              ),
+              SizedBox(height: 16),
+              TextFormField(
+                controller: _addressController,
+                enabled: _isEditing,
+                decoration: InputDecoration(
+                  labelText: 'Adresse',
+                  border: OutlineInputBorder(),
                 ),
-                SizedBox(height: 16),
-                TextFormField(
-                  controller: _bioController,
-                  decoration: InputDecoration(
-                    labelText: 'Bio',
-                    border: OutlineInputBorder(),
-                  ),
-                  maxLines: 3,
-                ),
-                SizedBox(height: 24),
+                maxLines: 2,
+              ),
+              SizedBox(height: 24),
+              if (_isEditing)
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
@@ -206,38 +224,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       onPressed: () {
                         setState(() {
                           _isEditing = false;
-                          _usernameController.text = user.name;
-                          _bioController.text = '';
+                          _loadUserData();
                           _selectedImagePath = null;
                         });
                       },
                       child: Text('Annuler'),
                     ),
                     ElevatedButton(
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          _saveProfile();
-                          setState(() {
-                            _isEditing = false;
-                          });
-                        }
-                      },
+                      onPressed: _saveProfile,
                       child: Text('Enregistrer'),
                     ),
                   ],
                 ),
-              ],
+              SizedBox(height: 24),
+              OutlinedButton(
+                onPressed: () {
+                  Provider.of<AuthProvider>(context, listen: false).logout();
+                  Navigator.of(context).pushReplacementNamed('/');
+                },
+                child: Text('Se déconnecter'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.red,
+                ),
+              ),
             ],
           ),
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _usernameController.dispose();
-    _bioController.dispose();
-    super.dispose();
   }
 }

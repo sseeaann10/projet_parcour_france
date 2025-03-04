@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:card_swiper/card_swiper.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/review_model.dart';
 import '../providers/auth_provider.dart';
 import 'package:provider/provider.dart';
@@ -23,7 +28,76 @@ class SpotDetailsScreen extends StatefulWidget {
 class _SpotDetailsScreenState extends State<SpotDetailsScreen> {
   final List<Review> reviews = [];
   final TextEditingController _commentController = TextEditingController();
+  final TextEditingController _addressController = TextEditingController();
   double _userRating = 0.0;
+  Position? _userPosition;
+  bool _isUsingCustomAddress = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _getUserLocation();
+  }
+
+  Future<void> _getUserLocation() async {
+    try {
+      Position position = await Geolocator.getCurrentPosition();
+      setState(() {
+        _userPosition = position;
+      });
+    } catch (e) {
+      print('Erreur de géolocalisation: $e');
+    }
+  }
+
+  Future<void> _searchAddress() async {
+    try {
+      List<Location> locations =
+          await locationFromAddress(_addressController.text);
+      if (locations.isNotEmpty) {
+        setState(() {
+          _userPosition = Position(
+            latitude: locations.first.latitude,
+            longitude: locations.first.longitude,
+            timestamp: DateTime.now(),
+            accuracy: 0,
+            altitude: 0,
+            heading: 0,
+            speed: 0,
+            speedAccuracy: 0,
+            altitudeAccuracy: 0,
+            headingAccuracy: 0,
+          );
+          _isUsingCustomAddress = true;
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Adresse non trouvée')),
+      );
+    }
+  }
+
+  Future<void> _openInMaps() async {
+    if (_userPosition == null && !_isUsingCustomAddress) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Localisation non disponible')),
+      );
+      return;
+    }
+
+    final url = Uri.parse(
+      'https://www.google.com/maps/dir/?api=1&origin=${_userPosition!.latitude},${_userPosition!.longitude}&destination=${widget.spot.latitude},${widget.spot.longitude}',
+    );
+
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Impossible d\'ouvrir Google Maps')),
+      );
+    }
+  }
 
   void _submitReview() {
     if (_commentController.text.isNotEmpty && _userRating > 0) {
@@ -170,6 +244,63 @@ class _SpotDetailsScreenState extends State<SpotDetailsScreen> {
                   Text('Catégorie : ${widget.spot.category}'),
                   SizedBox(height: 8.0),
                   Text('Adresse : ${widget.spot.address}'),
+                  SizedBox(height: 16.0),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _addressController,
+                          decoration: InputDecoration(
+                            hintText: 'Entrez votre adresse de départ',
+                            suffixIcon: IconButton(
+                              icon: Icon(Icons.search),
+                              onPressed: _searchAddress,
+                            ),
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.my_location),
+                        onPressed: _getUserLocation,
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 8.0),
+                  ElevatedButton.icon(
+                    onPressed: _openInMaps,
+                    icon: Icon(Icons.directions),
+                    label: Text('Calculer l\'itinéraire'),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              height: 200,
+              margin: EdgeInsets.symmetric(horizontal: 16.0),
+              child: FlutterMap(
+                options: MapOptions(
+                  center: LatLng(widget.spot.latitude, widget.spot.longitude),
+                  zoom: 13.0,
+                ),
+                children: [
+                  TileLayer(
+                    urlTemplate:
+                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    userAgentPackageName: 'com.projet_parcour_france.app',
+                  ),
+                  MarkerLayer(
+                    markers: [
+                      Marker(
+                        point:
+                            LatLng(widget.spot.latitude, widget.spot.longitude),
+                        child: Icon(
+                          Icons.location_on,
+                          color: Theme.of(context).primaryColor,
+                          size: 40,
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
