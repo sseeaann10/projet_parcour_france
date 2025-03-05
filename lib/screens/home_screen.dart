@@ -4,11 +4,12 @@ import 'profile_screen.dart';
 import '../widgets/spot_card.dart';
 import 'favorites_screen.dart';
 import 'spot_details_screen.dart';
-import '../db/database.dart';
 import 'publish_spot_screen.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import 'login_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../services/api_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -111,21 +112,41 @@ class HomeContentScreen extends StatefulWidget {
 }
 
 class _HomeContentScreenState extends State<HomeContentScreen> {
-  late AppDatabase database;
   List<Spot> spots = [];
 
   @override
   void initState() {
     super.initState();
-    database = AppDatabase();
     _loadSpots();
   }
 
   Future<void> _loadSpots() async {
-    final loadedSpots = await database.allSpots;
-    setState(() {
-      spots = loadedSpots;
-    });
+    try {
+      final QuerySnapshot snapshot =
+          await FirebaseFirestore.instance.collection('spots').get();
+      final loadedSpots = snapshot.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        return Spot(
+          id: doc.id,
+          userId: data['userId'] ?? '',
+          title: data['title'] ?? '',
+          description: data['description'] ?? '',
+          image: data['image'] ?? '',
+          rating: (data['rating'] ?? 0).toDouble(),
+          distance: (data['distance'] ?? 0).toDouble(),
+          category: data['category'] ?? '',
+          city: data['city'] ?? '',
+          latitude: (data['latitude'] ?? 0).toDouble(),
+          longitude: (data['longitude'] ?? 0).toDouble(),
+        );
+      }).toList();
+
+      setState(() {
+        spots = loadedSpots;
+      });
+    } catch (e) {
+      print('Erreur lors du chargement des spots: $e');
+    }
   }
 
   @override

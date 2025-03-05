@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart'; // Pour la géolocalisation
 import 'package:geocoding/geocoding.dart'; // Pour le géocodage
-import '../db/database.dart';
+import '../services/api_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SearchScreen extends StatefulWidget {
   @override
@@ -9,7 +10,6 @@ class SearchScreen extends StatefulWidget {
 }
 
 class _SearchScreenState extends State<SearchScreen> {
-  late AppDatabase database;
   List<Spot> allSpots = [];
   List<Spot> filteredSpots = [];
   Map<int, double> spotDistances = {};
@@ -35,25 +35,54 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   void initState() {
     super.initState();
-    database = AppDatabase();
     _loadSpots();
     _loadCategories();
     _getUserLocation();
   }
 
   Future<void> _loadSpots() async {
-    final spots = await database.allSpots;
-    setState(() {
-      allSpots = spots;
-      filteredSpots = spots;
-    });
+    try {
+      final QuerySnapshot snapshot =
+          await FirebaseFirestore.instance.collection('spots').get();
+      final loadedSpots = snapshot.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        return Spot(
+          id: doc.id,
+          userId: data['userId'] ?? '',
+          title: data['title'] ?? '',
+          description: data['description'] ?? '',
+          image: data['image'] ?? '',
+          rating: (data['rating'] ?? 0).toDouble(),
+          distance: (data['distance'] ?? 0).toDouble(),
+          category: data['category'] ?? '',
+          city: data['city'] ?? '',
+          latitude: (data['latitude'] ?? 0).toDouble(),
+          longitude: (data['longitude'] ?? 0).toDouble(),
+        );
+      }).toList();
+
+      setState(() {
+        allSpots = loadedSpots;
+        filteredSpots = loadedSpots;
+      });
+    } catch (e) {
+      print('Erreur lors du chargement des spots: $e');
+    }
   }
 
   Future<void> _loadCategories() async {
-    final dbCategories = await database.allCategories;
-    setState(() {
-      categories = ['Toutes', ...dbCategories.map((c) => c.name)];
-    });
+    try {
+      final QuerySnapshot snapshot =
+          await FirebaseFirestore.instance.collection('categories').get();
+      final dbCategories = snapshot.docs
+          .map((doc) => (doc.data() as Map<String, dynamic>)['name'] as String)
+          .toList();
+      setState(() {
+        categories = ['Toutes', ...dbCategories];
+      });
+    } catch (e) {
+      print('Erreur lors du chargement des catégories: $e');
+    }
   }
 
   // Fonction pour obtenir la localisation de l'utilisateur
@@ -110,7 +139,7 @@ class _SearchScreenState extends State<SearchScreen> {
               spot.longitude,
             ) /
             1000; // Convertir en kilomètres
-        spotDistances[spot.id] = distance;
+        spotDistances[int.parse(spot.id)] = distance;
       }
       _applyFilters();
     });

@@ -4,7 +4,7 @@ import '../models/review_model.dart';
 import '../providers/auth_provider.dart';
 import 'package:provider/provider.dart';
 import '../screens/signup_screen.dart';
-import '../db/database.dart';
+import '../services/api_service.dart';
 
 class SpotDetailsScreen extends StatefulWidget {
   final Spot spot;

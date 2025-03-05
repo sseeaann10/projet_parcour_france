@@ -8,7 +8,18 @@ allprojects {
 rootProject.buildDir = "../build"
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
+    
+    afterEvaluate {
+        if (project.hasProperty('android')) {
+            android {
+                buildFeatures {
+                    buildConfig true
+                }
+            }
+        }
+    }
 }
+
 subprojects {
     project.evaluationDependsOn(":app")
 }
