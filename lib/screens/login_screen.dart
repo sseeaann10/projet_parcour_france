@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore
 import './signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -23,32 +23,55 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  Future<void> _login(BuildContext context) async {
+  /// 🔹 Email & Password Login
+  Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
 
     try {
-      await Provider.of<AuthProvider>(context, listen: false).signIn(
+      UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
-      Navigator.of(context).pushReplacementNamed('/');
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
+
+      // Save session data to Firestore
+      await _saveSession(userCredential.user);
+
+      Navigator.of(context).pushReplacementNamed('/home'); // Navigate to home screen
+    } on FirebaseAuthException catch (e) {
+      String errorMessage = 'Une erreur est survenue';
+      if (e.code == 'user-not-found') {
+        errorMessage = 'Aucun utilisateur trouvé avec cet email.';
+      } else if (e.code == 'wrong-password') {
+        errorMessage = 'Mot de passe incorrect.';
+      }
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorMessage)));
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  /// Save session data to Firestore
+  Future<void> _saveSession(User? user) async {
+    if (user != null) {
+      final firestore = FirebaseFirestore.instance;
+
+      // Save the session in Firestore
+      await firestore.collection('sessions').doc(user.uid).set({
+        'uid': user.uid,
+        'email': user.email,
+        'loginTimestamp': FieldValue.serverTimestamp(), // Timestamp of login
+      });
+
+      print("Session saved for ${user.email}");
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Connexion'),
-      ),
+      appBar: AppBar(title: Text('Connexion')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -102,7 +125,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 24),
               ElevatedButton(
-                onPressed: _isLoading ? null : () => _login(context),
+                onPressed: _isLoading ? null : _login,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),

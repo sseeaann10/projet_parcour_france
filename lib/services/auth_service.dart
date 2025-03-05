@@ -6,10 +6,12 @@ class AuthService {
   final firebase_auth.FirebaseAuth _auth = firebase_auth.FirebaseAuth.instance;
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  // Obtenir l'utilisateur actuel
-  firebase_auth.User? get currentUser => _auth.currentUser;
+  // Get the current user
+  firebase_auth.User? getCurrentUser() {
+  return _auth.currentUser;
+}
 
-  // Inscription avec email et mot de passe
+  // Sign up method
   Future<app_user.User> signUp({
     required String email,
     required String password,
@@ -23,7 +25,7 @@ class AuthService {
 
       final user = userCredential.user!;
 
-      // Créer le profil utilisateur dans Firestore
+      // Create user profile in Firestore
       final userData = {
         'id': user.uid,
         'name': name,
@@ -43,7 +45,7 @@ class AuthService {
     }
   }
 
-  // Connexion avec email et mot de passe
+  // Sign in method
   Future<app_user.User> signIn({
     required String email,
     required String password,
@@ -58,7 +60,7 @@ class AuthService {
       final userDoc = await _db.collection('users').doc(user.uid).get();
 
       if (!userDoc.exists) {
-        throw Exception('Profil utilisateur non trouvé');
+        throw Exception('User profile not found');
       }
 
       return app_user.User.fromMap({
@@ -70,33 +72,33 @@ class AuthService {
     }
   }
 
-  // Déconnexion
+  // Sign out method
   Future<void> signOut() async {
     await _auth.signOut();
   }
 
-  // Gestion des erreurs Firebase Auth
+  // Handle Firebase Auth exceptions
   Exception _handleAuthException(dynamic e) {
     if (e is firebase_auth.FirebaseAuthException) {
       switch (e.code) {
         case 'email-already-in-use':
-          return Exception('Cette adresse email est déjà utilisée');
+          return Exception('This email is already in use');
         case 'invalid-email':
-          return Exception('Adresse email invalide');
+          return Exception('Invalid email address');
         case 'operation-not-allowed':
-          return Exception('Opération non autorisée');
+          return Exception('Operation not allowed');
         case 'weak-password':
-          return Exception('Le mot de passe est trop faible');
+          return Exception('Password is too weak');
         case 'user-disabled':
-          return Exception('Ce compte a été désactivé');
+          return Exception('This account has been disabled');
         case 'user-not-found':
-          return Exception('Aucun compte trouvé avec cette adresse email');
+          return Exception('No account found with this email');
         case 'wrong-password':
-          return Exception('Mot de passe incorrect');
+          return Exception('Incorrect password');
         default:
-          return Exception('Une erreur est survenue: ${e.message}');
+          return Exception('An error occurred: ${e.message}');
       }
     }
-    return Exception('Une erreur inattendue est survenue');
+    return Exception('An unexpected error occurred');
   }
 }

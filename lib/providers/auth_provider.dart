@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../services/auth_service.dart';
 import '../models/user.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 
 class AuthProvider with ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -9,9 +10,10 @@ class AuthProvider with ChangeNotifier {
   bool get isLoggedIn => _currentUser != null;
   String? get userId => _currentUser?.id;
   String? get userName => _currentUser?.name;
+  String? get userEmail => _currentUser?.email;  // Getter for email
   User? get currentUser => _currentUser;
 
-  // Inscription
+  // Inscription (sign-up)
   Future<void> signUp({
     required String email,
     required String password,
@@ -25,7 +27,7 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // Connexion
+  // Connexion (sign-in)
   Future<void> signIn({
     required String email,
     required String password,
@@ -37,29 +39,31 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // Déconnexion
+  // Déconnexion (log-out)
   Future<void> logout() async {
     await _authService.signOut();
     _currentUser = null;
     notifyListeners();
   }
 
-  // Vérifier l'état de connexion au démarrage
+  // Vérifier l'état de connexion au démarrage (Check auth state at startup)
   Future<void> checkAuthState() async {
-    final currentUser = _authService.currentUser;
-    if (currentUser != null) {
-      // Récupérer les données utilisateur depuis Firestore
+    final currentFirebaseUser = _authService.getCurrentUser();
+    if (currentFirebaseUser != null) {
       try {
-        _currentUser = await _authService.signIn(
-          email: currentUser.email!,
-          password:
-              '', // Le mot de passe n'est pas nécessaire car l'utilisateur est déjà connecté
+        // Retrieve the user profile from Firestore
+        final user = await _authService.signIn(
+          email: currentFirebaseUser.email!,
+          password: '',  // No password needed for already authenticated users
         );
-        notifyListeners();
+        _currentUser = user;  // Store the current user
       } catch (e) {
-        // En cas d'erreur, déconnecter l'utilisateur
+        // In case of an error, log the user out
         await logout();
       }
+    } else {
+      _currentUser = null; // No user signed in
     }
+    notifyListeners();  // Notify listeners about the state change
   }
 }

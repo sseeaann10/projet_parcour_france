@@ -1,24 +1,20 @@
 import 'package:flutter/material.dart';
-import 'search_screen.dart';
-import 'profile_screen.dart';
-import '../widgets/spot_card.dart';
-import 'favorites_screen.dart';
-import 'spot_details_screen.dart';
-import 'publish_spot_screen.dart';
-import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
-import 'login_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../services/api_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'search_screen.dart'; // Import other screens as needed
+import 'publish_spot_screen.dart';
+import 'favorites_screen.dart';
+import 'profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  static const routeName = '/home';
 
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  late Stream<QuerySnapshot> _spotsStream;
   int _currentIndex = 0;
 
   final List<Widget> _screens = [
@@ -29,42 +25,22 @@ class _HomeScreenState extends State<HomeScreen> {
     ProfileScreen(),
   ];
 
-  void _onItemTapped(int index) {
-    setState(() {
-      _currentIndex = index;
-    });
-
-    if (index == 1) {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      if (authProvider.isLoggedIn) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => PublishSpotScreen()),
-        );
-      } else {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => LoginScreen(),
-          ),
-        );
-      }
+  @override
+  void initState() {
+    super.initState();
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      // Fetch spots published by the current user
+      _spotsStream = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('spots')
+          .orderBy('timestamp', descending: true) // Optional: Order by timestamp
+          .snapshots();
     }
   }
 
-  void _handleNavigation(int index, BuildContext context) {
-    if (index == 2) {
-      // Index du bouton "Publier"
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      if (!authProvider.isLoggedIn) {
-        // Si l'utilisateur n'est pas connecté, rediriger vers l'écran de connexion
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => LoginScreen()),
-        );
-        return;
-      }
-    }
+  void _handleNavigation(int index) {
     setState(() {
       _currentIndex = index;
     });
@@ -73,32 +49,35 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _screens[_currentIndex],
+      appBar: AppBar(
+        title: Text('mesbonspots'),
+      ),
+      body: _screens[_currentIndex], // Display the selected screen
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
-        onTap: (index) => _handleNavigation(index, context),
-        selectedItemColor: Colors.blue, // Couleur de l'onglet sélectionné
-        unselectedItemColor: Colors.grey, // Couleur des autres onglets
+        onTap: _handleNavigation,
+        selectedItemColor: Colors.blue, // Color for selected tab
+        unselectedItemColor: Colors.grey, // Color for unselected tabs
         items: [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
-            label: 'Accueil',
+            label: 'Home', // Label for the "Home" tab
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.search),
-            label: 'Recherche',
+            label: 'Search', // Label for the "Search" tab
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.publish),
-            label: 'Publié',
+            label: 'Publish', // Label for the "Publish" tab
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.favorite),
-            label: 'Favoris',
+            label: 'Favorites', // Label for the "Favorites" tab
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
-            label: 'Profil',
+            label: 'Profile', // Label for the "Profile" tab
           ),
         ],
       ),
@@ -106,93 +85,47 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-class HomeContentScreen extends StatefulWidget {
-  @override
-  _HomeContentScreenState createState() => _HomeContentScreenState();
-}
-
-class _HomeContentScreenState extends State<HomeContentScreen> {
-  List<Spot> spots = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _loadSpots();
-  }
-
-  Future<void> _loadSpots() async {
-    try {
-      final QuerySnapshot snapshot =
-          await FirebaseFirestore.instance.collection('spots').get();
-      final loadedSpots = snapshot.docs.map((doc) {
-        final data = doc.data() as Map<String, dynamic>;
-        return Spot(
-          id: doc.id,
-          userId: data['userId'] ?? '',
-          title: data['title'] ?? '',
-          description: data['description'] ?? '',
-          image: data['image'] ?? '',
-          rating: (data['rating'] ?? 0).toDouble(),
-          distance: (data['distance'] ?? 0).toDouble(),
-          category: data['category'] ?? '',
-          city: data['city'] ?? '',
-          latitude: (data['latitude'] ?? 0).toDouble(),
-          longitude: (data['longitude'] ?? 0).toDouble(),
-        );
-      }).toList();
-
-      setState(() {
-        spots = loadedSpots;
-      });
-    } catch (e) {
-      print('Erreur lors du chargement des spots: $e');
-    }
-  }
-
+class HomeContentScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'mesbonspots',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        centerTitle: true,
-      ),
-      body: spots.isEmpty
-          ? Center(
-              child: Text('Aucun spot disponible'),
-            )
-          : ListView.builder(
-              itemCount: spots.length,
-              itemBuilder: (context, index) {
-                final spot = spots[index];
-                return SpotCard(
-                  title: spot.title,
-                  description: spot.description,
-                  imageUrl: spot.image,
-                  onTap: () {
-                    Navigator.of(context).push<void>(
-                      MaterialPageRoute<void>(
-                        builder: (context) => SpotDetailsScreen(
-                          spot: spot,
-                          onAddToFavorites: (spot) async {
-                            // Ici, vous pouvez ajouter la logique pour sauvegarder les favoris
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                  content: Text('Spot ajouté aux favoris')),
-                            );
-                          },
-                        ),
-                      ),
-                    );
-                  },
-                );
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(FirebaseAuth.instance.currentUser?.uid)
+          .collection('spots')
+          .orderBy('timestamp', descending: true) // Optional: Order by timestamp
+          .snapshots(),
+      builder: (ctx, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError) {
+          return Center(child: Text('An error occurred.'));
+        }
+
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return Center(child: Text('No spots published yet.'));
+        }
+
+        final spots = snapshot.data!.docs;
+
+        return ListView.builder(
+          itemCount: spots.length,
+          itemBuilder: (ctx, index) {
+            final spot = spots[index];
+            return ListTile(
+              title: Text(spot['title']),
+              subtitle: Text(spot['description']),
+              trailing: Icon(Icons.arrow_forward),
+              onTap: () {
+                // Optionally, navigate to the spot details page
+                // Navigator.of(context).pushNamed('/spot-detail', arguments: spot.id);
               },
-            ),
+            );
+          },
+        );
+      },
     );
   }
 }

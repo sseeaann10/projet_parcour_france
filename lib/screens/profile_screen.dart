@@ -1,117 +1,80 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
-import '../models/user.dart';
-import '../services/database_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'publish_spot_screen.dart'; // Import the publish spot screen
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   static const routeName = '/profile';
-  final _databaseService = DatabaseService();
+
+  @override
+  _ProfileScreenState createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  final _auth = FirebaseAuth.instance;
+  late User _user;
+  late Future<DocumentSnapshot> _userData; // No need for 'late' initialization here
+
+  @override
+  void initState() {
+    super.initState();
+    _user = _auth.currentUser!; // Ensure user is logged in
+    _userData = FirebaseFirestore.instance.collection('sessions').doc(_user.uid).get();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
-
-    if (!authProvider.isLoggedIn) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        Navigator.of(context).pushReplacementNamed('/login');
-      });
-      return Container();
-    }
-
     return Scaffold(
       appBar: AppBar(
-        title: Text('Profil'),
+        title: Text('Profile'),
         actions: [
           IconButton(
-            icon: Icon(Icons.edit),
-            onPressed: () {
-              Navigator.of(context).pushNamed('/edit-profile');
+            icon: Icon(Icons.exit_to_app),
+            onPressed: () async {
+              await FirebaseAuth.instance.signOut();
+              Navigator.of(context).pushReplacementNamed('/login');
             },
           ),
         ],
       ),
-      body: FutureBuilder<User>(
-        future: _databaseService.getUserProfile(authProvider.userId!),
+      body: FutureBuilder<DocumentSnapshot>(
+        future: _userData,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
           }
-
           if (snapshot.hasError) {
-            return Center(
-                child: Text('Une erreur est survenue: ${snapshot.error}'));
+            return Center(child: Text('An error occurred!'));
+          }
+          if (!snapshot.hasData || !snapshot.data!.exists) {
+            return Center(child: Text('No user data found.'));
           }
 
-          final user = snapshot.data!;
+          var userDoc = snapshot.data!;
+          String email = userDoc['email'] ?? 'No email available';
+          Timestamp loginTimestamp = userDoc['loginTimestamp'] ?? Timestamp.now();
 
-          return SingleChildScrollView(
-            padding: EdgeInsets.all(16),
+          return Padding(
+            padding: const EdgeInsets.all(16.0),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                CircleAvatar(
-                  radius: 50,
-                  backgroundImage: user.photoUrl != null
-                      ? NetworkImage(user.photoUrl!)
-                      : null,
-                  child: user.photoUrl == null
-                      ? Icon(Icons.person, size: 50)
-                      : null,
-                ),
-                SizedBox(height: 24),
-                Text(
-                  user.name,
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                SizedBox(height: 16),
-                _buildInfoCard(
-                  icon: Icons.email,
-                  title: 'Email',
-                  value: user.email,
-                ),
-                _buildInfoCard(
-                  icon: Icons.phone,
-                  title: 'Téléphone',
-                  value: user.phone ?? 'Non renseigné',
-                ),
-                _buildInfoCard(
-                  icon: Icons.location_on,
-                  title: 'Adresse',
-                  value: user.address ?? 'Non renseignée',
-                ),
-                SizedBox(height: 24),
-                ElevatedButton.icon(
+                Text('Email: $email', style: Theme.of(context).textTheme.titleLarge),
+                SizedBox(height: 10),
+                Text('Last Login: ${loginTimestamp.toDate()}',
+                    style: Theme.of(context).textTheme.bodyLarge),
+                SizedBox(height: 20),
+                ElevatedButton(
                   onPressed: () {
-                    authProvider.logout();
-                    Navigator.of(context).pushReplacementNamed('/login');
+                    // Navigate to the PublishSpotScreen when button is pressed
+                    Navigator.of(context).pushNamed('/publish');
                   },
-                  icon: Icon(Icons.logout),
-                  label: Text('Se déconnecter'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    padding: EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                  ),
+                  child: Text('Publier un Spot'),
                 ),
               ],
             ),
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildInfoCard({
-    required IconData icon,
-    required String title,
-    required String value,
-  }) {
-    return Card(
-      margin: EdgeInsets.symmetric(vertical: 8),
-      child: ListTile(
-        leading: Icon(icon),
-        title: Text(title),
-        subtitle: Text(value),
       ),
     );
   }

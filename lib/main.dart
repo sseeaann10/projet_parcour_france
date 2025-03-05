@@ -6,21 +6,21 @@ import 'screens/home_screen.dart'; // Importe l'écran d'accueil
 import 'providers/auth_provider.dart';
 import 'screens/profile_screen.dart';
 import 'screens/login_screen.dart';
+import 'screens/publish_spot_screen.dart';
 import 'models/user.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: const FirebaseOptions(
-        apiKey: "VOTRE_API_KEY",
-        authDomain: "VOTRE_AUTH_DOMAIN",
-        projectId: "VOTRE_PROJECT_ID",
-        storageBucket: "VOTRE_STORAGE_BUCKET",
-        messagingSenderId: "VOTRE_MESSAGING_SENDER_ID",
-        appId: "VOTRE_APP_ID"),
+  await Firebase.initializeApp();
+
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => AuthProvider()..checkAuthState(),
+      child: MyApp(),
+    ),
   );
-  runApp(MyApp());
 }
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -45,6 +45,8 @@ class MyApp extends StatelessWidget {
               ),
           '/profile': (context) => ProfileScreen(),
           '/login': (context) => LoginScreen(),
+          '/home': (context) => HomeScreen(),
+          '/publish': (context) => PublishSpotScreen()
         },
       ),
     );
